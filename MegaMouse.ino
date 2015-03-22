@@ -163,12 +163,12 @@ uint32_t count = 0;
 #define ER2 7
 #define EL1 26
 #define EL2 31
-#define hasLeftWall 160
-#define hasRightWall 160
+#define hasLeftWall 400
+#define hasRightWall 800
 
 // PID Constants
-#define Kp 16
-#define Kd 10
+#define Kp 30
+#define Kd 20
 // ADD I
 
 // IR Pair Pins
@@ -234,10 +234,10 @@ void setup() {
   pinMode(intPin, INPUT);
 
   // Encoder Interrupt Setups
-  attachInterrupt(ER1, rightEncoder, CHANGE);
-  attachInterrupt(ER2, rightEncoder, CHANGE);
-  attachInterrupt(EL1, leftEncoder, CHANGE);
-  attachInterrupt(EL2, leftEncoder, CHANGE);
+  attachInterrupt(ER1, rightEncoder1, RISING);
+  attachInterrupt(ER2, rightEncoder2, RISING);
+  attachInterrupt(EL1, leftEncoder1, RISING);
+  attachInterrupt(EL2, leftEncoder2, RISING);
 
   // Wait for Button Press to Start
   readSensors();
@@ -260,7 +260,7 @@ void setup() {
 
 void loop() {
   //  moveForward()
-readSensors();
+//readSensors();
   //  if (wallLeft())
   //    Serial.println("Wall Left");
   //    if (wallRight())
@@ -268,7 +268,6 @@ readSensors();
   //  if (wallFront())
   //  Serial.println("Wall Front");
   //  delay(100);
-
   //  Serial.print(leftSensor);
   //  Serial.print(" ");
   //  Serial.println(rightSensor);
@@ -280,7 +279,8 @@ readSensors();
   //    while (wallFront()) {
   //      turnLeft();
   //    }
-      moveForward();
+//      moveForward();
+      delay(100);
       if (wallFront()) {
         for (int i = currentLeftPWM; i > 0; i-=2) {
           setLeftPWM(i);
@@ -320,20 +320,21 @@ void moveForward()
   else if (wallLeft()) //only has left wall
   {
       Serial.println("Has Left");
-//    errorP = 2 * (leftMiddleValue - leftSensor + 30);
-//    errorD = errorP - oldErrorP;
-    //      errorP = 0;//(leftEncoder – rightEncoder*1005/1000)*3;
-    //      errorD = 0;
+//      errorP = 2 * (leftMiddleValue – leftSensor);
+//      errorD = errorP – oldErrorP;
+          errorP = 0;//(leftEncoder – rightEncoder*1005/1000)*3;
+   errorD = 0;
   }
   else if (wallRight()) //only has right wall
   {
     Serial.println("Has Right");
-    //    errorP =   2*(rightSensor - rightMiddleValue);
-    //    errorD = errorP - oldErrorP;
-    errorP = 0;
-    errorD = 0;
+//     errorP =  2*(rightSensor - rightMiddleValue);
+//     errorP =  3000-rightSensor;
+//     errorD = errorP - oldErrorP;
+     errorP = 0;
+     errorD = 0;
   }
-  else if (!wallLeft() && !wallRight()) //no wall, use encoder or gyro
+  else //no wall, use encoder or gyro
   {
   Serial.println("Has None");
     errorP = 0;//(leftEncoder – rightEncoder*1005/1000)*3;
@@ -347,9 +348,9 @@ void moveForward()
   currentLeftPWM = leftBaseSpeed + totalError / 1000;
   currentRightPWM = rightBaseSpeed - totalError / 1000;
 
-//  Serial.print(currentLeftPWM);
-//  Serial.print(" ");
-//  Serial.println(currentRightPWM);
+  Serial.print(currentLeftPWM);
+  Serial.print(" ");
+  Serial.println(currentRightPWM);
 
   // Update Motor PWM values
   setLeftPWM(currentLeftPWM);
@@ -453,7 +454,7 @@ void turnLeft() {
 }
 
 boolean wallFront() {
-  return (leftFront>3000 && rightFront>3000);
+  return (leftFront>2900 && rightFront>2900);
 }
 
 boolean wallLeft() {
@@ -548,11 +549,41 @@ void setRightPWM(int value) {
 }
 
 // Right Encoder ISR
-void rightEncoder() {
-  rightTicks++;
+void rightEncoder1() {
+  if (digitalReadFast(ER2) == LOW) {
+    rightTicks++;
+  }
+  else {
+    rightTicks--;
+  }
 }
 
+
+void rightEncoder2() {
+  if (digitalReadFast(ER1) == HIGH) {
+    rightTicks++;
+  }
+  else {
+    rightTicks--;
+  }
+}
+
+
 // Left Encoder ISR
-void leftEncoder() {
-  leftTicks++;
+void leftEncoder1() {
+  if (digitalReadFast(EL2) == HIGH) {
+    leftTicks++;
+  }
+  else {
+    leftTicks--;
+  }
+}
+
+void leftEncoder2() {
+  if (digitalReadFast(EL1) == LOW) {
+    leftTicks++;
+  }
+  else {
+    leftTicks--;
+  }
 }
