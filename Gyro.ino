@@ -1,4 +1,13 @@
-// Register Map: http://www.invensense.com/mems/gyro/documents/RM-MPU-6000A-00v4.2.pdf
+#include "Gyro.h"
+
+void setupGyro() {
+  // Begin I2C using Teensy's seconds I2C bus (Wire1) on pins 29 and 30 with a speed of 400kHz
+  Wire1.begin(I2C_MASTER, 0x68, I2C_PINS_29_30, I2C_PULLUP_INT, I2C_RATE_400);
+  // Calibrate gyro and accelerometers, load biases in bias registers
+  calibrateMPU6050(gyroBias, accelBias);
+  //Initialize Gyro
+  initMPU6050();
+}
 
 void getGres() {
   switch (Gscale)
@@ -55,6 +64,15 @@ return ((int16_t)rawData[0]) << 8 | rawData[1];
 
 void calibrateMPU6050(float * dest1, float * dest2)
 {
+  int16_t accelCount[3];           // Stores the 16-bit signed accelerometer sensor output
+float ax, ay, az;                // Stores the real accel value in g's
+int16_t gyroCount[3];            // Stores the 16-bit signed gyro sensor output
+float gx, gy, gz;                // Stores the real gyro value in degrees per seconds
+float gyroBias[3], accelBias[3]; // Bias corrections for gyro and accelerometer
+int16_t tempCount;               // Stores the internal chip temperature sensor output
+float temperature;               // Scaled temperature in degrees Celsius
+float SelfTest[6];               // Gyro and accelerometer self-test sensor output
+uint32_t count = 0;
   uint8_t data[12]; // data array to hold accelerometer and gyro x, y, z, data
   uint16_t ii, packet_count, fifo_count;
   int32_t gyro_bias[3] = {0, 0, 0}, accel_bias[3] = {0, 0, 0};
@@ -248,12 +266,12 @@ void writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
   Wire1.endTransmission();           // Send the Tx buffer
 }
 
-float getGyroZ() {
-  if (readByte(MPU6050_ADDRESS, INT_STATUS) & 0x01) {
-    getGres(); 
-  gz = (float)readGyroData()*gRes - gyroBias[2];
-//    Serial.println(gz);
-    return gz;
-  }
-  
-}
+//float getGyroZ() {
+//  if (readByte(MPU6050_ADDRESS, INT_STATUS) & 0x01) {
+//    getGres(); 
+//  gz = (float)readGyroData()*gRes - gyroBias[2];
+////    Serial.println(gz);
+//    return gz;
+//  }
+//  
+//}
