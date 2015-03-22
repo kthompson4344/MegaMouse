@@ -8,8 +8,11 @@
 #define hasRightWall 800
 
 // PID Constants
-#define Kp 30
-#define Kd 20
+#define Kp 16
+#define Kd 10
+
+
+IntervalTimer correctionTimer;
 
 const int buttonPin = 24;
 
@@ -20,7 +23,8 @@ void setup() {
 
   // 12 bit ADC resolution
   analogReadResolution(12);
-  
+  correctionTimer.begin(correction,1000);
+  correctionTimer.priority(255);
   setupMotors();
   setupSensors();
 
@@ -35,6 +39,7 @@ void setup() {
 //  }
   while (rightFront < 3300 && rightMiddleValue < 3300 && rightSensor < 3300) {
     readSensors();
+    Serial.println(leftSensor);
   }
   delay(2000);
   
@@ -48,6 +53,9 @@ void setup() {
 void loop() {
   //  moveForward()
 //readSensors();
+Serial.print(leftTicks);
+Serial.print(" ");
+Serial.println(rightTicks);
   //  if (wallLeft())
   //    Serial.println("Wall Left");
   //    if (wallRight())
@@ -83,9 +91,87 @@ void loop() {
 
 //mack calls certain number of move forwards, we add however many ticks for every move forward
 
+void correction() {
+  const int oneCellTicks = 330;
+  const int readingTicks = 170;
+  const int noWallRight = 0;
+  const int noWallLeft = 0;
+  const int target = 0;
+  bool rightValid;
+  bool leftValid;
+  bool nextRightValid;
+  bool nextLeftValid;
+  static bool nextCellDecided = 0;
+//  int righTicksRemaining;
+//  int leftTicksRemaining;
+  int errorP;
+  int errorD;
+  int oldErrorP;
+  int totalError;
+  int leftBaseSpeed = 30;
+  int rightBaseSpeed = 40;
+  
+  rightTicks = 0;
+  leftTicks = 0;
+  
+  readSensors();
+  
+  if ((rightTicks + leftTicks)/2 >= readingTicks && nextCellDecided==0) {
+    if (rightMiddleValue > noWallRight) {
+      rightValid = 1;
+      nextRightValid = 1;// Probably not necessary
+    }
+    else {
+      nextRightValid = 0;
+      
+      // rightValid = 0 in y number of ticks
+    }
+    
+    if (leftMiddleValue > noWallLeft) {
+      leftValid = 1;
+      nextLeftValid = 1;// Probably not necessary
+    }
+    else {
+      nextLeftValid = 0;
+      // leftValid = 0 in y number of ticks
+    }
+    nextCellDecided = 1;
+  }
+  
+  
+  
+  if (leftValid && rightValid) {
+    // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
+    errorP = leftSensor - rightSensor + 100;//100 is the offset between left and right sensor when mouse in the middle of cell
+    errorD = errorP - oldErrorP;
+  }
+  else if (leftValid) {
+    // Only left wall, insert one wall correction here
+    errorP = 0;
+    errorD = 0;
+  }
+  else if (rightValid) {
+    // Only right wall, insert one wall correction here
+    errorP = 0;
+    errorD = 0;
+  }
+  else {
+    // No walls, use encoders to correct
+    errorP = 0;
+    errorD = 0;
+  }
+  
+  if ((rightTicks + leftTicks)/2 >= 330) {
+    rightTicks = 0;
+    leftTicks = 0;
+    nextCellDecided = 0;
+  }
+  
+}
+
 void moveForward()
 {
-  const int tickCount = 554;
+//  const int tickCount = 554;
   int errorP;
   int errorD;
   int oldErrorP;
@@ -98,7 +184,7 @@ void moveForward()
 //  readSensors();
   if (wallLeft() && wallRight()) //has both walls
   { //ccw direction is positive
-          Serial.println("Has Both");
+    Serial.println("Has Both");
     errorP = leftSensor - rightSensor + 100;//1326 is the offset between left and right sensor when mouse in the middle of cell
     errorD = errorP - oldErrorP;
   }
