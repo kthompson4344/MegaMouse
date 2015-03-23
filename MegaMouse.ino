@@ -19,6 +19,8 @@ const int buttonPin = 24;
 const int LED2 = 16;
 
 void setup() {
+  float degreesTraveled;
+  float initialZ;
   Serial.begin(115200);
 
   // 12 bit ADC resolution
@@ -34,15 +36,33 @@ void setup() {
   pinMode(intPin, INPUT);
 
   // Wait for Button Press to Start
-  readSensors();
-//  while (digitalRead(buttonPin) == 1) {
-//  }
-  while (rightFront < 3300 && rightMiddleValue < 3300 && rightSensor < 3300) {
-    readSensors();
-//    Serial.println(leftSensor);
+//  readSensors();
+  while (digitalRead(buttonPin) == 1) {
   }
-  delay(2000);
+//  while (rightFront < 3300 && rightMiddleValue < 3300 && rightSensor < 3300) {
+//    readSensors();
+////    Serial.println(leftSensor);
+//  }
+  delay(1000);
   setupGyro();
+//  delay(2000);
+//  getGres(); 
+//  initialZ = (float)readGyroData()*gRes - gyroBias[2];
+//  count = millis();
+//  while(1) {
+//    
+//uint32_t deltat = millis() - count;
+//    if (deltat > 1) {
+//  getGres(); 
+//  gz = (float)readGyroData()*gRes - gyroBias[2];
+//  degreesTraveled += 2*(gz - 0) * 0.001;
+//  Serial.println(degreesTraveled);
+//      count = millis();
+//
+//    }
+//  }
+delay(1000);
+//turnRight();
   go = 1;
 //  turnRight();
 //turnLeft();
@@ -110,9 +130,25 @@ void correction() {
   int totalError;
   int leftBaseSpeed = 30;
   int rightBaseSpeed = 40;
+  static float angle;
+  static int lastTicksL;
+  static int lastTicksR;
+  static int targetAngle = 0;
+  int changeR;
+  int changeL;
   
   if (go == 1) {
+//  Serial.println(angle);
+
+  int currentTicksL = leftTicks;
+  int currentTicksR = rightTicks;
+  changeR = currentTicksR - lastTicksR;
+  changeL = currentTicksL - lastTicksL;
+  
+    
   readSensors();
+  
+  // Next Cell Wall Detection
   if ((rightTicks + leftTicks)/2 >= readingTicks && nextCellDecided==0) {
     //Maybe use this point to tell the algorithm where the walls are
     if (rightMiddleValue > noWallRight) {
@@ -121,13 +157,11 @@ void correction() {
     else {
       nextRightValid = 0;
     }
-    Serial.println(nextRightValid);
     if (leftMiddleValue > noWallLeft) {
-      nextLeftValid = 1;// Probably not necessary
+      nextLeftValid = 1;
     }
     else {
       nextLeftValid = 0;
-      // leftValid = 0 in y number of ticks
     }
     Serial.println(nextLeftValid);
     Serial.println(nextRightValid);
@@ -148,16 +182,24 @@ void correction() {
   if (leftValid && rightValid) {
     digitalWrite(LED2,HIGH);
 //    Serial.println("Has Both");
+angle = 0;
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
     errorP = leftSensor - rightSensor + 100;//100 is the offset between left and right sensor when mouse in the middle of cell
     errorD = errorP - oldErrorP;
+    if ((rightTicks+leftTicks)/2 >= 200) {
+      getGres(); 
+      gz = (float)readGyroData()*gRes - gyroBias[2];
+      targetAngle += 2*(gz) * 0.001;
+    }
+    
   }
   else if (leftValid) {
     digitalWrite(LED2,LOW);
     Serial.println("Has Left");
     // Only left wall, insert one wall correction here
-    errorP = 0;
-    errorD = 0;
+      errorP = 2 * (leftMiddleValue - leftSensor);
+      errorD = errorP - oldErrorP;
+      
   }
   else if (rightValid) {
     digitalWrite(LED2,LOW);
@@ -168,10 +210,20 @@ void correction() {
   }
   else {
     digitalWrite(LED2,LOW);
-    Serial.println("Has None");
+//    Serial.println("Has None");
     // No walls, use encoders to correct
-    errorP = 0;
-    errorD = 0;
+//    if (changeR < 0 || changeL < 0) {
+//      errorP = 0;
+//      errorD = 0;
+//    }
+//    else {
+//      errorP = 1000*(changeR - changeL);
+      getGres(); 
+      gz = (float)readGyroData()*gRes - gyroBias[2];
+      angle += 2*(gz) * 0.001;
+      errorP = 100*(angle-targetAngle);
+      errorD = errorP - oldErrorP;
+//    }
   }
   
   if ((rightTicks + leftTicks)/2 >= oneCellTicks) {
@@ -194,9 +246,21 @@ void correction() {
   // Update Motor PWM values
   setLeftPWM(currentLeftPWM);
   setRightPWM(currentRightPWM);
+  
+  lastTicksR = currentTicksR;
+  lastTicksL = currentTicksL;
   }
 }
 
+
+
+
+
+
+
+
+
+// 
 void moveForward()
 {
 //  const int tickCount = 554;
@@ -221,10 +285,10 @@ void moveForward()
   else if (wallLeft()) //only has left wall
   {
       Serial.println("Has Left");
-//      errorP = 2 * (leftMiddleValue – leftSensor);
-//      errorD = errorP – oldErrorP;
-          errorP = 0;//(leftEncoder – rightEncoder*1005/1000)*3;
-   errorD = 0;
+      errorP = 2 * (leftSensor - leftMiddleValue);
+      errorD = errorP - oldErrorP;
+//          errorP = 0;//(leftEncoder – rightEncoder*1005/1000)*3;
+//   errorD = 0;
   }
   else if (wallRight()) //only has right wall
   {
@@ -297,6 +361,7 @@ void turnRight() {
   getGres(); 
   gz = (float)readGyroData()*gRes - gyroBias[2];
   degreesTraveled += 2*(gz - initialZ) * 0.001;
+  Serial.println(degreesTraveled);
       count = millis();
 
     }

@@ -56,23 +56,23 @@ int16_t readGyroData()
 {
   uint8_t rawData[2];  // x/y/z gyro register data stored here
   readBytes(MPU6050_ADDRESS, GYRO_ZOUT_H, 2, &rawData[0]);  // Read the six raw data registers sequentially into data array
-//  rawData[1] = readByte(MPU6050_ADDRESS, GYRO_ZOUT_L);
-//  destination = (int16_t)((rawData[0] << 8) | rawData[1]) ; 
+  //  rawData[1] = readByte(MPU6050_ADDRESS, GYRO_ZOUT_L);
+  //  destination = (int16_t)((rawData[0] << 8) | rawData[1]) ;
 
-return ((int16_t)rawData[0]) << 8 | rawData[1];
+  return ((int16_t)rawData[0]) << 8 | rawData[1];
 }
 
 void calibrateMPU6050(float * dest1, float * dest2)
 {
   int16_t accelCount[3];           // Stores the 16-bit signed accelerometer sensor output
-float ax, ay, az;                // Stores the real accel value in g's
-int16_t gyroCount[3];            // Stores the 16-bit signed gyro sensor output
-float gx, gy, gz;                // Stores the real gyro value in degrees per seconds
-float gyroBias[3], accelBias[3]; // Bias corrections for gyro and accelerometer
-int16_t tempCount;               // Stores the internal chip temperature sensor output
-float temperature;               // Scaled temperature in degrees Celsius
-float SelfTest[6];               // Gyro and accelerometer self-test sensor output
-uint32_t count = 0;
+  float ax, ay, az;                // Stores the real accel value in g's
+  int16_t gyroCount[3];            // Stores the 16-bit signed gyro sensor output
+  float gx, gy, gz;                // Stores the real gyro value in degrees per seconds
+  float gyroBias[3], accelBias[3]; // Bias corrections for gyro and accelerometer
+  int16_t tempCount;               // Stores the internal chip temperature sensor output
+  float temperature;               // Scaled temperature in degrees Celsius
+  float SelfTest[6];               // Gyro and accelerometer self-test sensor output
+  uint32_t count = 0;
   uint8_t data[12]; // data array to hold accelerometer and gyro x, y, z, data
   uint16_t ii, packet_count, fifo_count;
   int32_t gyro_bias[3] = {0, 0, 0}, accel_bias[3] = {0, 0, 0};
@@ -266,12 +266,10 @@ void writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
   Wire1.endTransmission();           // Send the Tx buffer
 }
 
-//float getGyroZ() {
-//  if (readByte(MPU6050_ADDRESS, INT_STATUS) & 0x01) {
-//    getGres(); 
-//  gz = (float)readGyroData()*gRes - gyroBias[2];
-////    Serial.println(gz);
-//    return gz;
-//  }
-//  
+float getGyroZ() {
+  getGres();
+  gz = (float)readGyroData() * gRes - gyroBias[2];
+  return gz;
+}
+//
 //}
