@@ -11,7 +11,7 @@
 #define Kp 16
 #define Kd 10
 
-
+bool go = 0;
 IntervalTimer correctionTimer;
 
 const int buttonPin = 24;
@@ -39,12 +39,11 @@ void setup() {
 //  }
   while (rightFront < 3300 && rightMiddleValue < 3300 && rightSensor < 3300) {
     readSensors();
-    Serial.println(leftSensor);
+//    Serial.println(leftSensor);
   }
   delay(2000);
-  
   setupGyro();
-  
+  go = 1;
 //  turnRight();
 //turnLeft();
 
@@ -53,9 +52,9 @@ void setup() {
 void loop() {
   //  moveForward()
 //readSensors();
-Serial.print(leftTicks);
-Serial.print(" ");
-Serial.println(rightTicks);
+//Serial.print(leftTicks);
+//Serial.print(" ");
+//Serial.println(rightTicks);
   //  if (wallLeft())
   //    Serial.println("Wall Left");
   //    if (wallRight())
@@ -75,30 +74,31 @@ Serial.println(rightTicks);
   //      turnLeft();
   //    }
 //      moveForward();
-      delay(100);
-      if (wallFront()) {
-        for (int i = currentLeftPWM; i > 0; i-=2) {
-          setLeftPWM(i);
-          setRightPWM(i);
-          
-        }
-        while(1) {
-        setLeftPWM(0);
-        setRightPWM(0);
-        }
-      }
+//      delay(100);
+//      if (wallFront()) {
+//        for (int i = currentLeftPWM; i > 0; i-=2) {
+//          setLeftPWM(i);
+//          setRightPWM(i);
+//          
+//        }
+//        while(1) {
+//        setLeftPWM(0);
+//        setRightPWM(0);
+//        }
+//      }
 }
 
 //mack calls certain number of move forwards, we add however many ticks for every move forward
 
 void correction() {
   const int oneCellTicks = 330;
-  const int readingTicks = 170;
-  const int noWallRight = 0;//check this value
-  const int noWallLeft = 0;//check this value
-  const int newSideTicks = 290;//check this value
-  bool rightValid;
-  bool leftValid;
+  const int readingTicks = 180;
+  const int noWallRight = 800;//check this value
+  const int noWallLeft = 800;//check this value
+  const int newSideTicks = 200;//check this value
+  //the start square is bounded by three walls so these two will always start as 1
+  static bool rightValid = 1;
+  static bool leftValid = 1;
   bool nextRightValid;
   bool nextLeftValid;
   static bool nextCellDecided = 0;
@@ -111,11 +111,8 @@ void correction() {
   int leftBaseSpeed = 30;
   int rightBaseSpeed = 40;
   
-//  rightTicks = 0;
-//  leftTicks = 0;
-  
+  if (go == 1) {
   readSensors();
-  
   if ((rightTicks + leftTicks)/2 >= readingTicks && nextCellDecided==0) {
     //Maybe use this point to tell the algorithm where the walls are
     if (rightMiddleValue > noWallRight) {
@@ -123,9 +120,8 @@ void correction() {
     }
     else {
       nextRightValid = 0;
-
     }
-    
+    Serial.println(nextRightValid);
     if (leftMiddleValue > noWallLeft) {
       nextLeftValid = 1;// Probably not necessary
     }
@@ -133,6 +129,8 @@ void correction() {
       nextLeftValid = 0;
       // leftValid = 0 in y number of ticks
     }
+    Serial.println(nextLeftValid);
+    Serial.println(nextRightValid);
     nextCellDecided = 1;
   }
   
@@ -142,38 +140,61 @@ void correction() {
     nextCellDecided = 0;
   }
   
-  if ((rightTicks + leftTicks) >= oneCellTicks) {
+  if ((rightTicks + leftTicks)/2 >= oneCellTicks) {
     rightTicks = 0;
     leftTicks = 0;
   }
   
   if (leftValid && rightValid) {
+    digitalWrite(LED2,HIGH);
+//    Serial.println("Has Both");
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
     errorP = leftSensor - rightSensor + 100;//100 is the offset between left and right sensor when mouse in the middle of cell
     errorD = errorP - oldErrorP;
   }
   else if (leftValid) {
+    digitalWrite(LED2,LOW);
+    Serial.println("Has Left");
     // Only left wall, insert one wall correction here
     errorP = 0;
     errorD = 0;
   }
   else if (rightValid) {
+    digitalWrite(LED2,LOW);
+    Serial.println("Has Right");
     // Only right wall, insert one wall correction here
     errorP = 0;
     errorD = 0;
   }
   else {
+    digitalWrite(LED2,LOW);
+    Serial.println("Has None");
     // No walls, use encoders to correct
     errorP = 0;
     errorD = 0;
   }
   
-  if ((rightTicks + leftTicks)/2 >= 330) {
+  if ((rightTicks + leftTicks)/2 >= oneCellTicks) {
     rightTicks = 0;
     leftTicks = 0;
     nextCellDecided = 0;
   }
   
+  totalError = Kp * errorP + Kd * errorD;
+  oldErrorP = errorP;
+
+  // Calculate PWM based on Error
+  currentLeftPWM = leftBaseSpeed + totalError / 1000;
+  currentRightPWM = rightBaseSpeed - totalError / 1000;
+
+  Serial.print(currentLeftPWM);
+  Serial.print(" ");
+  Serial.println(currentRightPWM);
+
+  // Update Motor PWM values
+  setLeftPWM(currentLeftPWM);
+  setRightPWM(currentRightPWM);
+  }
 }
 
 void moveForward()
