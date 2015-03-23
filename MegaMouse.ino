@@ -94,9 +94,9 @@ Serial.println(rightTicks);
 void correction() {
   const int oneCellTicks = 330;
   const int readingTicks = 170;
-  const int noWallRight = 0;
-  const int noWallLeft = 0;
-  const int target = 0;
+  const int noWallRight = 0;//check this value
+  const int noWallLeft = 0;//check this value
+  const int newSideTicks = 290;//check this value
   bool rightValid;
   bool leftValid;
   bool nextRightValid;
@@ -111,24 +111,22 @@ void correction() {
   int leftBaseSpeed = 30;
   int rightBaseSpeed = 40;
   
-  rightTicks = 0;
-  leftTicks = 0;
+//  rightTicks = 0;
+//  leftTicks = 0;
   
   readSensors();
   
   if ((rightTicks + leftTicks)/2 >= readingTicks && nextCellDecided==0) {
+    //Maybe use this point to tell the algorithm where the walls are
     if (rightMiddleValue > noWallRight) {
-      rightValid = 1;
-      nextRightValid = 1;// Probably not necessary
+      nextRightValid = 1;
     }
     else {
       nextRightValid = 0;
-      
-      // rightValid = 0 in y number of ticks
+
     }
     
     if (leftMiddleValue > noWallLeft) {
-      leftValid = 1;
       nextLeftValid = 1;// Probably not necessary
     }
     else {
@@ -138,7 +136,16 @@ void correction() {
     nextCellDecided = 1;
   }
   
+  if ((rightTicks + leftTicks) / 2 >= newSideTicks) {
+    leftValid = nextLeftValid;
+    rightValid = nextRightValid;
+    nextCellDecided = 0;
+  }
   
+  if ((rightTicks + leftTicks) >= oneCellTicks) {
+    rightTicks = 0;
+    leftTicks = 0;
+  }
   
   if (leftValid && rightValid) {
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
