@@ -195,18 +195,19 @@ angle = 0;
   }
   else if (leftValid) {
     digitalWrite(LED2,LOW);
-    Serial.println("Has Left");
+//    Serial.println("Has Left");
     // Only left wall, insert one wall correction here
-      errorP = 2 * (leftMiddleValue - leftSensor);
+//      errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100*(angle-targetAngle);
+      errorP = 100*(angle-targetAngle) + (leftSensor-2000);
       errorD = errorP - oldErrorP;
       
   }
   else if (rightValid) {
     digitalWrite(LED2,LOW);
-    Serial.println("Has Right");
+//    Serial.println("Has Right");
     // Only right wall, insert one wall correction here
-    errorP = 0;
-    errorD = 0;
+    errorP = 100*(angle-targetAngle) - (rightSensor-2000);
+    errorD = errorP - oldErrorP;
   }
   else {
     digitalWrite(LED2,LOW);
