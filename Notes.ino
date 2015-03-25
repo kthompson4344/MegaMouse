@@ -11,3 +11,9 @@
 
 //get to middle of cell, look ahead and compute ticks remaining and is sensor valid or invalide(bool)
 //detect upcoming diagonal about 75-80 from the middle of the upper post
+
+//create function called moveForwardCorrection(). Put correction code there. flag that sets when that should be happening
+
+//curve turn
+
+//tick variable corruption
