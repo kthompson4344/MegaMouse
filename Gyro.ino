@@ -233,16 +233,16 @@ void initMPU6050()
   // Configure Gyro and Accelerometer
   // Disable FSYNC and set accelerometer and gyro bandwidth to 44 and 42 Hz, respectively;
   // DLPF_CFG = bits 2:0 = 010; this sets the sample rate at 1 kHz for both
-  writeByte(MPU6050_ADDRESS, CONFIG, 0x03);
+  writeByte(MPU6050_ADDRESS, CONFIG, 0x01);
 
   // Set sample rate = gyroscope output rate/(1 + SMPLRT_DIV)
-  writeByte(MPU6050_ADDRESS, SMPLRT_DIV, 0x04);  // Use a 200 Hz sample rate
+  writeByte(MPU6050_ADDRESS, SMPLRT_DIV, 0x00);  // Use a 200 Hz sample rate
 
   // Set gyroscope full scale range
   // Range selects FS_SEL and AFS_SEL are 0 - 3, so 2-bit values are left-shifted into positions 4:3
   uint8_t c =  readByte(MPU6050_ADDRESS, GYRO_CONFIG);
   writeByte(MPU6050_ADDRESS, GYRO_CONFIG, c & ~0xE0); // Clear self-test bits [7:5]
-  writeByte(MPU6050_ADDRESS, GYRO_CONFIG, c & ~0x18); // Clear AFS bits [4:3]
+  writeByte(MPU6050_ADDRESS, GYRO_CONFIG, c & ~0x18); // Clear AFS bits [4:3] c & ~0x18
   writeByte(MPU6050_ADDRESS, GYRO_CONFIG, c | Gscale << 3); // Set full scale range for the gyro
 
   // Set accelerometer configuration
@@ -270,6 +270,33 @@ float getGyroZ() {
   getGres();
   gz = (float)readGyroData() * gRes - gyroBias[2];
   return gz;
+}
+
+uint16_t readAccelData()
+{
+  uint8_t rawData[2];  // x/y/z accel register data stored here
+  readBytes(MPU6050_ADDRESS, ACCEL_ZOUT_H, 2, &rawData[0]);  // Read the six raw data registers into data array
+  return ((int16_t)rawData[0]) << 8 | rawData[1];
+}
+
+void getAres() {
+  switch (Ascale)
+  {
+ 	// Possible accelerometer scales (and their register bit settings) are:
+	// 2 Gs (00), 4 Gs (01), 8 Gs (10), and 16 Gs  (11). 
+    case AFS_2G:
+          aRes = 2.0/32768.0;
+          break;
+    case AFS_4G:
+          aRes = 4.0/32768.0;
+          break;
+    case AFS_8G:
+          aRes = 8.0/32768.0;
+          break;
+    case AFS_16G:
+          aRes = 16.0/32768.0;
+          break;
+  }
 }
 //
 //}

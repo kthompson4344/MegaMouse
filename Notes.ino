@@ -9,11 +9,16 @@
 
 //reflectivity calibration
 
-//get to middle of cell, look ahead and compute ticks remaining and is sensor valid or invalide(bool)
-//detect upcoming diagonal about 75-80 from the middle of the upper post
+//tick variable corruption?
 
-//create function called moveForwardCorrection(). Put correction code there. flag that sets when that should be happening
+//remove delays from sensor read
 
-//curve turn
+//pre-turn alignment
 
-//tick variable corruption
+//pick up detection
+
+//forward wall values when exiting a turn
+
+//check wall left and right thresholds
+
+//check base speeds

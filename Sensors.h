@@ -12,9 +12,9 @@ int TX[6] = {25, 10,   9,  22,  32, 10};
 int RX[6] = {A4, A17, A16, A14, A5, A3};
 const int diagHighPower = 23;
 
-int leftSensor;
-int rightSensor;
-int rightMiddleValue;
-int leftMiddleValue;
-int leftFront;
-int rightFront;
+volatile int leftSensor;
+volatile int rightSensor;
+volatile int rightMiddleValue;
+volatile int leftMiddleValue;
+volatile int leftFront;
+volatile int rightFront;

@@ -138,9 +138,9 @@ int Ascale = AFS_2G;
 float aRes, gRes;
 
 int16_t accelCount[3];           // Stores the 16-bit signed accelerometer sensor output
-float ax, ay, az;                // Stores the real accel value in g's
+volatile float ax, ay, az;                // Stores the real accel value in g's
 int16_t gyroCount[3];            // Stores the 16-bit signed gyro sensor output
-float gx, gy, gz;                // Stores the real gyro value in degrees per seconds
+volatile float gx, gy, gz;                // Stores the real gyro value in degrees per seconds
 float gyroBias[3], accelBias[3]; // Bias corrections for gyro and accelerometer
 int16_t tempCount;               // Stores the internal chip temperature sensor output
 float temperature;               // Scaled temperature in degrees Celsius

@@ -6,16 +6,6 @@ void setupSensors() {
   pinMode(diagHighPower, OUTPUT);
 }
 
-int readPair(int pair) {
-  // TODO Shorten Times
-  int reading;
-  digitalWrite(TX[pair], HIGH);
-  delayMicroseconds(100);
-  reading = analogRead(RX[pair]);
-  digitalWrite(TX[pair], LOW);
-  delayMicroseconds(100);
-  return reading;
-}
 
 //void readSensors() {
 //  // TODO Calibrate Better
@@ -25,33 +15,100 @@ int readPair(int pair) {
 //  rightMiddleValue = 391.17 * (1 / getLn(readPair(diagr))) - 63.22 + 15; //15?
 //}
 
+//void readSensors() {
+//  digitalWriteFast(TX[lf],HIGH);
+//  delayMicroseconds(60);
+//  leftFront = analogRead(RX[lf]);
+//  digitalWriteFast(TX[lf],LOW);
+//  delayMicroseconds(80);
+//  
+//  digitalWriteFast(TX[rf],HIGH);
+//  delayMicroseconds(60);
+//  rightFront = analogRead(RX[rf]);
+//  digitalWriteFast(TX[rf],LOW);
+//  delayMicroseconds(80);
+//  
+//  digitalWriteFast(TX[left],HIGH);
+//  digitalWriteFast(TX[right],HIGH);
+//  delayMicroseconds(60);
+//  leftSensor = analogRead(RX[left]);
+//  rightSensor = analogRead(RX[right]);
+//  digitalWriteFast(TX[left],LOW);
+//  digitalWriteFast(TX[right],LOW);
+//  delayMicroseconds(80);
+//  
+//  digitalWriteFast(TX[diagl],HIGH);
+//  digitalWriteFast(23, HIGH);
+//  delayMicroseconds(60);
+//  leftMiddleValue = analogRead(RX[diagl]);
+//  rightMiddleValue = analogRead(RX[diagr]);
+//  digitalWriteFast(TX[diagl],LOW);
+//  digitalWriteFast(23, LOW);
+//}
+
 void readSensors() {
-  digitalWriteFast(TX[lf],HIGH);
-  delayMicroseconds(60);
-  leftFront = analogRead(RX[lf]);
-  digitalWriteFast(TX[lf],LOW);
-  delayMicroseconds(80);
+  int leftFrontAmbient;
+  int rightFrontAmbient;
+  int leftSensorAmbient;
+  int rightSensorAmbient;
+  int leftMiddleAmbient;
+  int rightMiddleAmbient;
+  static int state = 0;
+  if (haveSensorReading == 0) {
+    switch (state) {
+    case 0 :
+      leftFrontAmbient = analogRead(RX[lf]);
+      digitalWriteFast(TX[lf],HIGH);
+      break;
+      
+    case 1 :
+      leftFront = analogRead(RX[lf]) - leftFrontAmbient;
+      digitalWriteFast(TX[lf],LOW);
+      break;
+      
+    case 2 :
+      rightFrontAmbient = analogRead(RX[rf]);
+      digitalWriteFast(TX[rf],HIGH);
+      break;
+      
+    case 3 :
+      rightFront = analogRead(RX[rf]) - rightFrontAmbient;
+      digitalWriteFast(TX[rf],LOW);
+      break;
+      
+    case 4 :
+      leftSensorAmbient = analogRead(RX[left]);
+      rightSensorAmbient = analogRead(RX[right]);
+      digitalWriteFast(TX[left],HIGH);
+      digitalWriteFast(TX[right],HIGH);
+      break;
+      
+    case 5 :
+      leftSensor = analogRead(RX[left]) - leftSensorAmbient;
+      rightSensor = analogRead(RX[right]) - rightSensorAmbient;
+      digitalWriteFast(TX[left],LOW);
+      digitalWriteFast(TX[right],LOW);
+      break;
+      
+    case 6 :
+      leftMiddleAmbient = analogRead(RX[diagl]);
+      rightMiddleAmbient = analogRead(RX[diagr]);
+      digitalWriteFast(TX[diagl],HIGH);
+      digitalWriteFast(diagHighPower, HIGH);
+      break;
+      
+    case 7 :
+      leftMiddleValue = analogRead(RX[diagl]) - leftMiddleAmbient;
+      rightMiddleValue = analogRead(RX[diagr]) - rightMiddleAmbient;
+      digitalWriteFast(TX[diagl],LOW);
+      digitalWriteFast(diagHighPower, LOW);
+      break;
+  }
+  state++;
   
-  digitalWriteFast(TX[rf],HIGH);
-  delayMicroseconds(60);
-  rightFront = analogRead(RX[rf]);
-  digitalWriteFast(TX[rf],LOW);
-  delayMicroseconds(80);
-  
-  digitalWriteFast(TX[left],HIGH);
-  digitalWriteFast(TX[right],HIGH);
-  delayMicroseconds(60);
-  leftSensor = analogRead(RX[left]);
-  rightSensor = analogRead(RX[right]);
-  digitalWriteFast(TX[left],LOW);
-  digitalWriteFast(TX[right],LOW);
-  delayMicroseconds(80);
-  
-  digitalWriteFast(TX[diagl],HIGH);
-  digitalWriteFast(23, HIGH);
-  delayMicroseconds(60);
-  leftMiddleValue = analogRead(RX[diagl]);
-  rightMiddleValue = analogRead(RX[diagr]);
-  digitalWriteFast(TX[diagl],LOW);
-  digitalWriteFast(23, LOW);
+  if (state > 7) {
+    state = 0;
+    haveSensorReading = 1;
+  }
+  }
 }
