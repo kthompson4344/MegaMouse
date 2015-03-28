@@ -1,7 +1,9 @@
 
 void setupMotors() {
   // Define Motor Pins as Outputs
+  analogWriteResolution(11);
   for (int i = 0; i < 4; i++) {
+    analogWriteFrequency(motorPins[i], 23437);
     pinMode(motorPins[i], OUTPUT);
   }
   

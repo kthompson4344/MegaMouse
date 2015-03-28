@@ -2,10 +2,11 @@ void setupSensors() {
   // Define IR Pair TXs as Outputs
   for (int i = 0; i < 6; i++) {
     pinMode(TX[i], OUTPUT);
+    digitalWriteFast(TX[i], LOW);
   }
   pinMode(diagHighPower, OUTPUT);
+  digitalWriteFast(diagHighPower, LOW);
 }
-
 
 //void readSensors() {
 //  // TODO Calibrate Better
@@ -58,46 +59,49 @@ void readSensors() {
     switch (state) {
     case 0 :
       leftFrontAmbient = analogRead(RX[lf]);
-      digitalWriteFast(TX[lf],HIGH);
+      rightFrontAmbient = analogRead(RX[rf]);
+      leftSensorAmbient = analogRead(RX[left]);
+      rightSensorAmbient = analogRead(RX[right]);
+      leftMiddleAmbient = analogRead(RX[diagl]);
+      rightMiddleAmbient = analogRead(RX[diagr]);
       break;
       
     case 1 :
+      digitalWriteFast(TX[lf],HIGH);
+      break;
+      
+    case 2 :
       leftFront = analogRead(RX[lf]) - leftFrontAmbient;
       digitalWriteFast(TX[lf],LOW);
       break;
       
-    case 2 :
-      rightFrontAmbient = analogRead(RX[rf]);
+    case 3 :
       digitalWriteFast(TX[rf],HIGH);
       break;
       
-    case 3 :
+    case 4 :
       rightFront = analogRead(RX[rf]) - rightFrontAmbient;
       digitalWriteFast(TX[rf],LOW);
       break;
       
-    case 4 :
-      leftSensorAmbient = analogRead(RX[left]);
-      rightSensorAmbient = analogRead(RX[right]);
+    case 5 :
       digitalWriteFast(TX[left],HIGH);
       digitalWriteFast(TX[right],HIGH);
       break;
       
-    case 5 :
+    case 6 :
       leftSensor = analogRead(RX[left]) - leftSensorAmbient;
       rightSensor = analogRead(RX[right]) - rightSensorAmbient;
       digitalWriteFast(TX[left],LOW);
       digitalWriteFast(TX[right],LOW);
       break;
       
-    case 6 :
-      leftMiddleAmbient = analogRead(RX[diagl]);
-      rightMiddleAmbient = analogRead(RX[diagr]);
+    case 7 :
       digitalWriteFast(TX[diagl],HIGH);
       digitalWriteFast(diagHighPower, HIGH);
       break;
       
-    case 7 :
+    case 8 :
       leftMiddleValue = analogRead(RX[diagl]) - leftMiddleAmbient;
       rightMiddleValue = analogRead(RX[diagr]) - rightMiddleAmbient;
       digitalWriteFast(TX[diagl],LOW);
@@ -106,9 +110,23 @@ void readSensors() {
   }
   state++;
   
-  if (state > 7) {
+  if (state > 8) {
     state = 0;
     haveSensorReading = 1;
   }
   }
 }
+
+void displaySensors() {
+   Serial.print(leftFront);
+   Serial.print(" ");
+   Serial.print(leftMiddleValue);
+   Serial.print(" ");
+   Serial.print(leftSensor);
+   Serial.print(" ");
+   Serial.print(rightSensor);
+   Serial.print(" ");
+   Serial.print(rightMiddleValue);
+   Serial.print(" ");
+   Serial.println(rightFront);
+ }

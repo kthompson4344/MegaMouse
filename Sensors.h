@@ -8,8 +8,8 @@
 #define diagr 5
 
 // IR Pair Pins
-int TX[6] = {25, 10,   9,  22,  32, 10};
-int RX[6] = {A4, A17, A16, A14, A5, A3};
+const int TX[6] = {25, 10,   9,  22,  32, 10};
+const int RX[6] = {A4, A17, A16, A14, A5, A3};
 const int diagHighPower = 23;
 
 volatile int leftSensor;

@@ -1,8 +1,6 @@
 //Axle allignment:
 //http://micromouseusa.com/?p=828
 
-//Decide what to do when axle is alligned with post
-
 //get velocity (ticks/s) or (m/s)
 
 //calibrate sensors
@@ -10,8 +8,6 @@
 //reflectivity calibration
 
 //tick variable corruption?
-
-//remove delays from sensor read
 
 //pre-turn alignment
 
@@ -22,3 +18,12 @@
 //check wall left and right thresholds
 
 //check base speeds
+
+//use deg/s instead of degrees in curve turn table
+
+//Check one wall correction(turn correction of at posts)
+
+//Check forwardCorrection values (reduce reading and newSide
+
+//change ambient reads
+
