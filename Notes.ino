@@ -13,17 +13,15 @@
 
 //pick up detection
 
-//forward wall values when exiting a turn
+//forward correction when exiting a turn!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-//check wall left and right thresholds
+//use deg/s instead of degrees in curve turn table??
 
-//check base speeds
+//Check one wall correction(turn correction off at posts)
 
-//use deg/s instead of degrees in curve turn table
+//Check forwardCorrection values
 
-//Check one wall correction(turn correction of at posts)
+//Better correction in turnAround
 
-//Check forwardCorrection values (reduce reading and newSide
-
-//change ambient reads
+//Read next cell walls for forwardCorrection after second pivot turn
 

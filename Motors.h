@@ -19,6 +19,5 @@ int currentRightPWM = 0;
 int currentLeftPWM = 0;
 
 // Encoder Ticks
-// should these be volatile?
 volatile int rightTicks = 0;
 volatile int leftTicks = 0;

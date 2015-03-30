@@ -130,3 +130,17 @@ void displaySensors() {
    Serial.print(" ");
    Serial.println(rightFront);
  }
+ 
+ boolean wallFront() {
+  return (leftFront > 550 && rightFront > 550);
+}
+
+boolean wallLeft() {
+  //  readSensors();
+  return (leftSensor > hasLeftWall);
+}
+
+boolean wallRight() {
+  //  readSensors();
+  return (rightSensor > hasRightWall);
+}
