@@ -1,4 +1,4 @@
-//Axle allignment:
+//Axle allignment:/peg correction
 //http://micromouseusa.com/?p=828
 
 //get velocity (ticks/s) or (m/s)

@@ -97,9 +97,9 @@ void calibrateMPU6050(float * dest1, float * dest2)
   delay(15);
 
   // Configure MPU6050 gyro and accelerometer for bias calculation
-  writeByte(MPU6050_ADDRESS, CONFIG, 0x01);      // Set low-pass filter to 188 Hz
+  writeByte(MPU6050_ADDRESS, CONFIG, 0x00);      // Set low-pass filter to 188 Hz
   writeByte(MPU6050_ADDRESS, SMPLRT_DIV, 0x00);  // Set sample rate to 1 kHz
-  writeByte(MPU6050_ADDRESS, GYRO_CONFIG, 0x00);  // Set gyro full-scale to 250 degrees per second, maximum sensitivity
+  writeByte(MPU6050_ADDRESS, GYRO_CONFIG, 0x03);  // Set gyro full-scale to 250 degrees per second, maximum sensitivity
   writeByte(MPU6050_ADDRESS, ACCEL_CONFIG, 0x00); // Set accelerometer full-scale to 2 g, maximum sensitivity
 
   uint16_t  gyrosensitivity  = 131;   // = 131 LSB/degrees/sec
@@ -233,7 +233,7 @@ void initMPU6050()
   // Configure Gyro and Accelerometer
   // Disable FSYNC and set accelerometer and gyro bandwidth to 44 and 42 Hz, respectively;
   // DLPF_CFG = bits 2:0 = 010; this sets the sample rate at 1 kHz for both
-  writeByte(MPU6050_ADDRESS, CONFIG, 0x01);
+  writeByte(MPU6050_ADDRESS, CONFIG, 0x00);//0x01
 
   // Set sample rate = gyroscope output rate/(1 + SMPLRT_DIV)
   writeByte(MPU6050_ADDRESS, SMPLRT_DIV, 0x00);  // Use a 200 Hz sample rate
