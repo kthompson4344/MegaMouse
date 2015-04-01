@@ -89,19 +89,19 @@ void setup() {
   //moveType = NO;
   //  while (1) {
   //    digitalWriteFast(LED2,HIGH);
-//  moveForward();
-//  while (needMove == 0);
+  moveForward();
+  while (needMove == 0);
 //  turnLeft();
-//  turnRight();
-//  while (needMove == 0);
+  turnRight();
+  while (needMove == 0);
 //  turnRight();
 //  while (needMove == 0);
   //    digitalWriteFast(LED1,LOW);
   //    digitalWriteFast(LED2,LOW);
   //    turnAround();
   //    while (needMove == 0);
-//  setLeftPWM(0);
-//  setRightPWM(0);
+  setLeftPWM(0);
+  setRightPWM(0);
   //pivotTurnRight();
   //while(1);
   //pivotTurnRight();
@@ -186,7 +186,7 @@ void setup() {
 void loop() {
 
   //Serial.println(rightTicks);
-    wallFollow();
+//    wallFollow();
   //
   //  //displaySensors();
   //  setLeftPWM(0);
@@ -199,14 +199,14 @@ void loop() {
   //  Serial.print(" ");
   //  Serial.print("Wall Front = ");
   //  Serial.println(wallFront());
-  //  displaySensors();
-  //      delay(100);
+//    displaySensors();
+//        delay(100);
 }
 
 //mack calls certain number of move forwards, we add however many ticks for every move forward
 
 void correction() {
-  readSensors();
+//  readSensors();
   switch (moveType) {
     case FORWARD :
       forwardCorrection();
@@ -224,8 +224,8 @@ void correction() {
 }
 
 void moveForward() {
-  digitalWriteFast(LED2, HIGH);
-          digitalWriteFast(LED1, HIGH);
+//  digitalWriteFast(LED2, HIGH);
+//          digitalWriteFast(LED1, HIGH);
   rightTicks = 0;
   leftTicks = 0;
   leftBaseSpeed = 240;//240
@@ -247,8 +247,8 @@ void moveForward() {
 }
 
 void turnRight() {
-  digitalWriteFast(LED2, HIGH);
-          digitalWriteFast(LED1, LOW);
+//  digitalWriteFast(LED2, HIGH);
+//          digitalWriteFast(LED1, LOW);
   leftBaseSpeed = 240;
   rightBaseSpeed = 240;
   moveType = TURN_RIGHT;
@@ -256,8 +256,8 @@ void turnRight() {
 }
 
 void turnLeft() {
-  digitalWriteFast(LED2, LOW);
-          digitalWriteFast(LED1, HIGH);
+//  digitalWriteFast(LED2, LOW);
+//          digitalWriteFast(LED1, HIGH);
   leftBaseSpeed = 240;
   rightBaseSpeed = 240;
   moveType = TURN_LEFT;
@@ -510,60 +510,60 @@ void forwardCorrection() {
   //no wall front, wall back, drops below 800 at 222
   //wall front, no walls back, goes above 1000 at 196
 
-    // No walls in next cell or current cell
- /*     if (currentWallRight == 0 && nextRightValid == 0 && ticksDecided == 0) {
-        if (rightSensor >= pegNoWalls) {
-          leftTicks = noWallTicks;
-          rightTicks = noWallTicks;
-          ticksDecided = 1;
-        }
-      }
-  
-      // No walls in next cell, walls in current cell
-      else if (currentWallRight == 1 && nextRightValid == 0 && ticksDecided == 0) {
-        if (rightSensor <= pegWallBack) {
-          leftTicks = wallBackTicks;
-          rightTicks = wallBackTicks;
-          ticksDecided = 1;
-        }
-      }
-  
-      // No walls in current cell, wall in next cell
-      else if (currentWallRight == 0 && nextRightValid == 1 && ticksDecided == 0) {
-        if (rightSensor >= pegWallFront) {
-            leftTicks = frontWallTicks;
-            rightTicks = frontWallTicks;
-            ticksDecided = 1;
-        }
-      }
-  
-    // No walls in next cell or current cell
-      if (currentWallLeft == 0 && nextLeftValid == 0 && ticksDecided == 0) {
-        if (leftSensor >= pegNoWalls) {
-          leftTicks = noWallTicks;
-          rightTicks = noWallTicks;
-         ticksDecided = 1;
-        }
-      }
-  
-      // No walls in next cell, walls in current cell
-      else if (currentWallLeft == 1 && nextLeftValid == 0 && ticksDecided == 0) {
-        if (leftSensor <= pegWallBack) {
-         leftTicks = wallBackTicks;
-          rightTicks = wallBackTicks;
-          ticksDecided = 1;
-        }
-      }
-  
-      // No walls in current cell, wall in next cell
-      else if (currentWallLeft == 0 && nextLeftValid == 1 && ticksDecided == 0) {
-        if (leftSensor >= pegWallFront) {
-            leftTicks = frontWallTicks;
-            rightTicks = frontWallTicks;
-            ticksDecided = 1;
-        }
-      }
-    */
+//    // No walls in next cell or current cell
+//      if (currentWallRight == 0 && nextRightValid == 0 && ticksDecided == 0) {
+//        if (rightSensor >= pegNoWalls) {
+//          leftTicks = noWallTicks;
+//          rightTicks = noWallTicks;
+//          ticksDecided = 1;
+//        }
+//      }
+//  
+//      // No walls in next cell, walls in current cell
+//      else if (currentWallRight == 1 && nextRightValid == 0 && ticksDecided == 0) {
+//        if (rightSensor <= pegWallBack) {
+//          leftTicks = wallBackTicks;
+//          rightTicks = wallBackTicks;
+//          ticksDecided = 1;
+//        }
+//      }
+//  
+//      // No walls in current cell, wall in next cell
+//      else if (currentWallRight == 0 && nextRightValid == 1 && ticksDecided == 0) {
+//        if (rightSensor >= pegWallFront) {
+//            leftTicks = frontWallTicks;
+//            rightTicks = frontWallTicks;
+//            ticksDecided = 1;
+//        }
+//      }
+//  
+//    // No walls in next cell or current cell
+//      if (currentWallLeft == 0 && nextLeftValid == 0 && ticksDecided == 0) {
+//        if (leftSensor >= pegNoWalls) {
+//          leftTicks = noWallTicks;
+//          rightTicks = noWallTicks;
+//         ticksDecided = 1;
+//        }
+//      }
+//  
+//      // No walls in next cell, walls in current cell
+//      else if (currentWallLeft == 1 && nextLeftValid == 0 && ticksDecided == 0) {
+//        if (leftSensor <= pegWallBack) {
+//         leftTicks = wallBackTicks;
+//          rightTicks = wallBackTicks;
+//          ticksDecided = 1;
+//        }
+//      }
+//  
+//      // No walls in current cell, wall in next cell
+//      else if (currentWallLeft == 0 && nextLeftValid == 1 && ticksDecided == 0) {
+//        if (leftSensor >= pegWallFront) {
+//            leftTicks = frontWallTicks;
+//            rightTicks = frontWallTicks;
+//            ticksDecided = 1;
+//        }
+//      }
+    
   if ((rightTicks + leftTicks) / 2 >= oneCellTicks) {
     endCell = 1;
   }
@@ -622,6 +622,7 @@ void turnCorrection() {
     if (moveType == TURN_RIGHT) {
       angle += 1.37 * (gz) * 0.001;//comment out for curve3
       //      angle += 1 * (gz) * .001;
+      
       errorP = 100 * (angle + targetAngle);//comment out for curve3
     }
     else {
@@ -665,7 +666,7 @@ void turnCorrection() {
       //      digitalWriteFast(LED1, LOW);
       //      digitalWriteFast(LED2, LOW);
       //    Serial.println("Has Both");
-      angle = 0;
+
       //targetAngle = 0;
       // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
       errorP = leftSensor - rightSensor - 100;//100 is the offset between left and right sensor when mouse in the middle of cell
@@ -707,6 +708,7 @@ void turnCorrection() {
       errorD = errorP - oldErrorP;
     }
     else {
+      const int wallFrontValue = 350;
 //          digitalWriteFast(LED1, LOW);
 //            digitalWriteFast(LED2, LOW);
       //    Serial.println("Has None");
@@ -720,8 +722,12 @@ void turnCorrection() {
       getGres();
       gz = (float)readGyroData() * gRes - gyroBias[2];
       angle += 1 * (gz) * 0.001;
-      
-      errorP = 20 * (angle - targetAngle);
+      if (rightFront > wallFrontValue && leftFront > wallFrontValue) {
+      errorP = 2 * (rightFront - leftFront + 10);
+      }
+      else {
+        errorP = 20 * (angle - targetAngle);
+      }
       errorD = errorP - oldErrorP;
       //    }
     }
@@ -746,16 +752,27 @@ void turnCorrection() {
   }
 
   if (i >= curve2Time && strait == 0) {
+    const int rightWallDiag = 300;
+    const int leftWallDiag = 800;
     //  if (i >= curve3Time) {
     strait = 1;
-
+    if (rightMiddleValue >= rightWallDiag && wallRight()) {
+      digitalWriteFast(LED2,HIGH);
+      rightValid = 1;
+    }
+    else {
+      rightValid = 0;
+    }
+    if (leftMiddleValue >= leftWallDiag && wallLeft()) {
+      digitalWriteFast(LED1,HIGH);
+      leftValid = 1;
+    }
+    else {
+      leftValid = 0;
+    }
     //    leftValid = 0;
     //    rightValid = 0;
 
-
-
-    rightValid = 0; //wallRight();
-    leftValid = 0; //wallLeft();
     if (moveType == TURN_RIGHT) {
       targetAngle = -110;
     }
@@ -768,6 +785,21 @@ void turnCorrection() {
 
   if (strait == 1) {
 //    Serial.println(angle);
+//    if (wallFront()) {
+//      const int frontStop = 275;
+//      if ((leftFront + rightFront)/2 >= frontStop) {
+//        i = 0;
+//        angle = 0;
+//        oldErrorP = 0;
+//        rightTicks = 0;
+//        leftTicks = 0;
+//        moveType = NO;
+//        needMove = 1;
+//        strait = 0;
+//      }
+//    }
+//    else {
+    
     if ((rightTicks + leftTicks) / 2 >= targetTicks) {
       
       i = 0;
@@ -779,6 +811,7 @@ void turnCorrection() {
       needMove = 1;
       strait = 0;
     }
+//    }
   }
 }
 

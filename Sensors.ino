@@ -132,7 +132,7 @@ void displaySensors() {
  }
  
  boolean wallFront() {
-  return (leftFront > 450 && rightFront > 450);
+  return (leftFront > 250 && rightFront > 250);
 }
 
 boolean wallLeft() {
