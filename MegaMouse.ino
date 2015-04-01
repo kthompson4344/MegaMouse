@@ -89,16 +89,19 @@ void setup() {
   //moveType = NO;
   //  while (1) {
   //    digitalWriteFast(LED2,HIGH);
-      moveForward();
-      while (needMove == 0);
-      turnRight();
-      while(needMove == 0);
+//  moveForward();
+//  while (needMove == 0);
+//  turnLeft();
+//  turnRight();
+//  while (needMove == 0);
+//  turnRight();
+//  while (needMove == 0);
   //    digitalWriteFast(LED1,LOW);
   //    digitalWriteFast(LED2,LOW);
   //    turnAround();
   //    while (needMove == 0);
-  setLeftPWM(0);
-  setRightPWM(0);
+//  setLeftPWM(0);
+//  setRightPWM(0);
   //pivotTurnRight();
   //while(1);
   //pivotTurnRight();
@@ -183,9 +186,9 @@ void setup() {
 void loop() {
 
   //Serial.println(rightTicks);
-//  wallFollow();
-//
-//  //displaySensors();
+    wallFollow();
+  //
+  //  //displaySensors();
   //  setLeftPWM(0);
   //  setRightPWM(0);
   //  Serial.print("Wall Left = ");
@@ -221,6 +224,8 @@ void correction() {
 }
 
 void moveForward() {
+  digitalWriteFast(LED2, HIGH);
+          digitalWriteFast(LED1, HIGH);
   rightTicks = 0;
   leftTicks = 0;
   leftBaseSpeed = 240;//240
@@ -242,6 +247,8 @@ void moveForward() {
 }
 
 void turnRight() {
+  digitalWriteFast(LED2, HIGH);
+          digitalWriteFast(LED1, LOW);
   leftBaseSpeed = 240;
   rightBaseSpeed = 240;
   moveType = TURN_RIGHT;
@@ -249,6 +256,8 @@ void turnRight() {
 }
 
 void turnLeft() {
+  digitalWriteFast(LED2, LOW);
+          digitalWriteFast(LED1, HIGH);
   leftBaseSpeed = 240;
   rightBaseSpeed = 240;
   moveType = TURN_LEFT;
@@ -433,8 +442,8 @@ void forwardCorrection() {
   if (leftValid && rightValid) {
     //    digitalWriteFast(LED2, HIGH);
     //    digitalWriteFast(LED1, HIGH);
-    digitalWriteFast(LED1, LOW);
-    digitalWriteFast(LED2, LOW);
+//    digitalWriteFast(LED1, HIGH);
+//    digitalWriteFast(LED2, HIGH);
     //    Serial.println("Has Both");
     angle = 0;
     targetAngle = 0;
@@ -451,8 +460,8 @@ void forwardCorrection() {
     const int wallDist = 1900;//Make this bigger to move closer to the wall
     //    digitalWriteFast(LED1, HIGH);
     //    digitalWriteFast(LED2, LOW);
-    digitalWriteFast(LED1, LOW);
-    digitalWriteFast(LED2, LOW);
+//    digitalWriteFast(LED1, HIGH);
+//    digitalWriteFast(LED2, LOW);
     //    Serial.println("Has Left");
     // Only left wall, insert one wall correction here
     //      errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100*(angle-targetAngle);
@@ -467,8 +476,8 @@ void forwardCorrection() {
     const int wallDist = 2000; //Make this bigger to move closer to the wall
     //    digitalWriteFast(LED1, LOW);
     //    digitalWriteFast(LED2, HIGH);
-    digitalWriteFast(LED1, LOW);
-    digitalWriteFast(LED2, LOW);
+//    digitalWriteFast(LED1, LOW);
+//    digitalWriteFast(LED2, HIGH);
 
     //    Serial.println("Has Right");
     // Only right wall, insert one wall correction here
@@ -479,8 +488,8 @@ void forwardCorrection() {
     errorD = errorP - oldErrorP;
   }
   else {
-    digitalWriteFast(LED1, LOW);
-    digitalWriteFast(LED2, LOW);
+//    digitalWriteFast(LED1, LOW);
+//    digitalWriteFast(LED2, LOW);
     //    Serial.println("Has None");
     // No walls, use encoders to correct
     //    if (changeR < 0 || changeL < 0) {
@@ -501,60 +510,60 @@ void forwardCorrection() {
   //no wall front, wall back, drops below 800 at 222
   //wall front, no walls back, goes above 1000 at 196
 
-  //  // No walls in next cell or current cell
-  //    if (currentWallRight == 0 && nextRightValid == 0 && ticksDecided == 0) {
-  //      if (rightSensor >= pegNoWalls) {
-  //        leftTicks = noWallTicks;
-  //        rightTicks = noWallTicks;
-  //        ticksDecided = 1;
-  //      }
-  //    }
-  //
-  //    // No walls in next cell, walls in current cell
-  //    else if (currentWallRight == 1 && nextRightValid == 0 && ticksDecided == 0) {
-  //      if (rightSensor <= pegWallBack) {
-  //        leftTicks = wallBackTicks;
-  //        rightTicks = wallBackTicks;
-  //        ticksDecided = 1;
-  //      }
-  //    }
-  //
-  //    // No walls in current cell, wall in next cell
-  //    else if (currentWallRight == 0 && nextRightValid == 1 && ticksDecided == 0) {
-  //      if (rightSensor >= pegWallFront) {
-  //          leftTicks = frontWallTicks;
-  //          rightTicks = frontWallTicks;
-  //          ticksDecided = 1;
-  //      }
-  //    }
-  //
-  //  // No walls in next cell or current cell
-  //    if (currentWallLeft == 0 && nextLeftValid == 0 && ticksDecided == 0) {
-  //      if (leftSensor >= pegNoWalls) {
-  //        leftTicks = noWallTicks;
-  //        rightTicks = noWallTicks;
-  //        ticksDecided = 1;
-  //      }
-  //    }
-  //
-  //    // No walls in next cell, walls in current cell
-  //    else if (currentWallLeft == 1 && nextLeftValid == 0 && ticksDecided == 0) {
-  //      if (leftSensor <= pegWallBack) {
-  //        leftTicks = wallBackTicks;
-  //        rightTicks = wallBackTicks;
-  //        ticksDecided = 1;
-  //      }
-  //    }
-  //
-  //    // No walls in current cell, wall in next cell
-  //    else if (currentWallLeft == 0 && nextLeftValid == 1 && ticksDecided == 0) {
-  //      if (leftSensor >= pegWallFront) {
-  //          leftTicks = frontWallTicks;
-  //          rightTicks = frontWallTicks;
-  //          ticksDecided = 1;
-  //      }
-  //    }
-
+    // No walls in next cell or current cell
+ /*     if (currentWallRight == 0 && nextRightValid == 0 && ticksDecided == 0) {
+        if (rightSensor >= pegNoWalls) {
+          leftTicks = noWallTicks;
+          rightTicks = noWallTicks;
+          ticksDecided = 1;
+        }
+      }
+  
+      // No walls in next cell, walls in current cell
+      else if (currentWallRight == 1 && nextRightValid == 0 && ticksDecided == 0) {
+        if (rightSensor <= pegWallBack) {
+          leftTicks = wallBackTicks;
+          rightTicks = wallBackTicks;
+          ticksDecided = 1;
+        }
+      }
+  
+      // No walls in current cell, wall in next cell
+      else if (currentWallRight == 0 && nextRightValid == 1 && ticksDecided == 0) {
+        if (rightSensor >= pegWallFront) {
+            leftTicks = frontWallTicks;
+            rightTicks = frontWallTicks;
+            ticksDecided = 1;
+        }
+      }
+  
+    // No walls in next cell or current cell
+      if (currentWallLeft == 0 && nextLeftValid == 0 && ticksDecided == 0) {
+        if (leftSensor >= pegNoWalls) {
+          leftTicks = noWallTicks;
+          rightTicks = noWallTicks;
+         ticksDecided = 1;
+        }
+      }
+  
+      // No walls in next cell, walls in current cell
+      else if (currentWallLeft == 1 && nextLeftValid == 0 && ticksDecided == 0) {
+        if (leftSensor <= pegWallBack) {
+         leftTicks = wallBackTicks;
+          rightTicks = wallBackTicks;
+          ticksDecided = 1;
+        }
+      }
+  
+      // No walls in current cell, wall in next cell
+      else if (currentWallLeft == 0 && nextLeftValid == 1 && ticksDecided == 0) {
+        if (leftSensor >= pegWallFront) {
+            leftTicks = frontWallTicks;
+            rightTicks = frontWallTicks;
+            ticksDecided = 1;
+        }
+      }
+    */
   if ((rightTicks + leftTicks) / 2 >= oneCellTicks) {
     endCell = 1;
   }
@@ -595,15 +604,15 @@ void turnCorrection() {
   int errorD;
   int oldErrorP;
   int totalError;
-  float targetAngle;
+  static float targetAngle;
   static int i = 0;
   static bool strait = 0;
   const int targetTicks = 145;
   //  const int targetTicks = 120;//curve3
 
   if (strait == 0) {
-    digitalWriteFast(LED1, HIGH);
-    digitalWriteFast(LED2, LOW);
+//    digitalWriteFast(LED1, HIGH);
+//    digitalWriteFast(LED2, HIGH);
     targetAngle = curve2[i];
     //    targetAngle = curve3[i];
     getGres();
@@ -612,12 +621,12 @@ void turnCorrection() {
 
     if (moveType == TURN_RIGHT) {
       angle += 1.37 * (gz) * 0.001;//comment out for curve3
-//      angle += 1 * (gz) * .001;
+      //      angle += 1 * (gz) * .001;
       errorP = 100 * (angle + targetAngle);//comment out for curve3
     }
     else {
       angle += 1.375 * (gz) * 0.001;//comment out for curve3
-//      angle += 1 * (gz) * .001;
+      //      angle += 1 * (gz) * .001;
       errorP = 100 * (angle - targetAngle);//comment out for curve3
     }
 
@@ -626,107 +635,110 @@ void turnCorrection() {
 
     rightTicks = 0;
     leftTicks = 0;
-  totalError = Kp * errorP + Kd * errorD;
-  oldErrorP = errorP;
+    totalError = Kp * errorP + Kd * errorD;
+    oldErrorP = errorP;
 
-  // Calculate PWM based on Error
-  currentLeftPWM = leftBaseSpeed + totalError / 124;
-  currentRightPWM = rightBaseSpeed - totalError / 124;
+    // Calculate PWM based on Error
+    currentLeftPWM = leftBaseSpeed + totalError / 124;
+    currentRightPWM = rightBaseSpeed - totalError / 124;
 
-  //  Serial.print(currentLeftPWM);
-  //  Serial.print(" ");
-  //  Serial.println(currentRightPWM);
+    //  Serial.print(currentLeftPWM);
+    //  Serial.print(" ");
+    //  Serial.println(currentRightPWM);
 
-  // Update Motor PWM values
-  setLeftPWM(currentLeftPWM);
-  setRightPWM(currentRightPWM);
-    
+    // Update Motor PWM values
+    setLeftPWM(currentLeftPWM);
+    setRightPWM(currentRightPWM);
+
   }
- else {
-    digitalWriteFast(LED2, HIGH);
-    digitalWriteFast(LED1, LOW);
+  else {
+//    digitalWriteFast(LED1, LOW);
+//    digitalWriteFast(LED2, LOW);
+    //digitalWriteFast(LED2, HIGH);
+    //digitalWriteFast(LED1, LOW);
 
-        setLeftPWM(leftBaseSpeed);
-        setRightPWM(rightBaseSpeed);
-//    if (leftValid && rightValid) {
-//      //    digitalWriteFast(LED2, HIGH);
-//      //    digitalWriteFast(LED1, HIGH);
-////      digitalWriteFast(LED1, LOW);
-////      digitalWriteFast(LED2, LOW);
-//      //    Serial.println("Has Both");
-//      angle = 0;
-//      targetAngle = 0;
-//      // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
-//      errorP = leftSensor - rightSensor - 100;//100 is the offset between left and right sensor when mouse in the middle of cell
-//      errorD = errorP - oldErrorP;
-//      //      getGres();
-//      //      gz = (float)readGyroData() * gRes - gyroBias[2];
-//      //      straightAngle += 2 * (gz) * 0.001;
-//
-//    }
-//    else if (leftValid) {
-//      const int wallDist = 1900;//Make this bigger to move closer to the wall
-//      //    digitalWriteFast(LED1, HIGH);
-//      //    digitalWriteFast(LED2, LOW);
-////      digitalWriteFast(LED1, LOW);
-////      digitalWriteFast(LED2, LOW);
-//      //    Serial.println("Has Left");
-//      // Only left wall, insert one wall correction here
-//      //      errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100*(angle-targetAngle);
-//      getGres();
-//      gz = (float)readGyroData() * gRes - gyroBias[2];
-//      angle += 2 * (gz) * 0.001;
-//      errorP = 20 * (angle - targetAngle) + .5 * (leftSensor - wallDist);
-//      errorD = errorP - oldErrorP;
-//
-//    }
-//    else if (rightValid) {
-//      const int wallDist = 2000; //Make this bigger to move closer to the wall
-//      //    digitalWriteFast(LED1, LOW);
-//      //    digitalWriteFast(LED2, HIGH);
-////      digitalWriteFast(LED1, LOW);
-////      digitalWriteFast(LED2, LOW);
-//
-//      //    Serial.println("Has Right");
-//      // Only right wall, insert one wall correction here
-//      getGres();
-//      gz = (float)readGyroData() * gRes - gyroBias[2];
-//      angle += 2 * (gz) * 0.001;
-//      errorP = 20 * (angle - targetAngle) - .5 * (rightSensor - wallDist);
-//      errorD = errorP - oldErrorP;
-//    }
-//    else {
-////      digitalWriteFast(LED1, LOW);
-////      digitalWriteFast(LED2, LOW);
-//      //    Serial.println("Has None");
-//      // No walls, use encoders to correct
-//      //    if (changeR < 0 || changeL < 0) {
-//      //      errorP = 0;
-//      //      errorD = 0;
-//      //    }
-//      //    else {
-//      //      errorP = 1000*(changeR - changeL);
-//      getGres();
-//      gz = (float)readGyroData() * gRes - gyroBias[2];
-//      angle += 2 * (gz) * 0.001;
-//      errorP = 20 * (angle - targetAngle);
-//      errorD = errorP - oldErrorP;
-//      //    }
-//    }
-//      totalError = Kp * errorP + Kd * errorD;
-//  oldErrorP = errorP;
-//
-//  // Calculate PWM based on Error
-//  currentLeftPWM = leftBaseSpeed + totalError / 124;
-//  currentRightPWM = rightBaseSpeed - totalError / 124;
-//
-//  //  Serial.print(currentLeftPWM);
-//  //  Serial.print(" ");
-//  //  Serial.println(currentRightPWM);
-//
-//  // Update Motor PWM values
-//  setLeftPWM(currentLeftPWM);
-//  setRightPWM(currentRightPWM);
+    //setLeftPWM(leftBaseSpeed);
+    //setRightPWM(rightBaseSpeed);
+    if (leftValid && rightValid) {
+//          digitalWriteFast(LED2, HIGH);
+//          digitalWriteFast(LED1, HIGH);
+      //      digitalWriteFast(LED1, LOW);
+      //      digitalWriteFast(LED2, LOW);
+      //    Serial.println("Has Both");
+      angle = 0;
+      //targetAngle = 0;
+      // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
+      errorP = leftSensor - rightSensor - 100;//100 is the offset between left and right sensor when mouse in the middle of cell
+      errorD = errorP - oldErrorP;
+      //      getGres();
+      //      gz = (float)readGyroData() * gRes - gyroBias[2];
+      //      straightAngle += 2 * (gz) * 0.001;
+
+    }
+    else if (leftValid) {
+      const int wallDist = 1900;//Make this bigger to move closer to the wall
+//          digitalWriteFast(LED1, HIGH);
+//          digitalWriteFast(LED2, LOW);
+      //      digitalWriteFast(LED1, LOW);
+      //      digitalWriteFast(LED2, LOW);
+      //    Serial.println("Has Left");
+      // Only left wall, insert one wall correction here
+      //      errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100*(angle-targetAngle);
+      getGres();
+      gz = (float)readGyroData() * gRes - gyroBias[2];
+      angle += 2 * (gz) * 0.001;
+      errorP = 20 * (angle - targetAngle) + .5 * (leftSensor - wallDist);
+      errorD = errorP - oldErrorP;
+
+    }
+    else if (rightValid) {
+      const int wallDist = 2000; //Make this bigger to move closer to the wall
+//          digitalWriteFast(LED1, LOW);
+//          digitalWriteFast(LED2, HIGH);
+      //      digitalWriteFast(LED1, LOW);
+      //      digitalWriteFast(LED2, LOW);
+
+      //    Serial.println("Has Right");
+      // Only right wall, insert one wall correction here
+      getGres();
+      gz = (float)readGyroData() * gRes - gyroBias[2];
+      angle += 2 * (gz) * 0.001;
+      errorP = 20 * (angle - targetAngle) - .5 * (rightSensor - wallDist);
+      errorD = errorP - oldErrorP;
+    }
+    else {
+//          digitalWriteFast(LED1, LOW);
+//            digitalWriteFast(LED2, LOW);
+      //    Serial.println("Has None");
+      // No walls, use encoders to correct
+      //    if (changeR < 0 || changeL < 0) {
+      //      errorP = 0;
+      //      errorD = 0;
+      //    }
+      //    else {
+      //      errorP = 1000*(changeR - changeL);
+      getGres();
+      gz = (float)readGyroData() * gRes - gyroBias[2];
+      angle += 1 * (gz) * 0.001;
+      
+      errorP = 20 * (angle - targetAngle);
+      errorD = errorP - oldErrorP;
+      //    }
+    }
+    totalError = Kp * errorP + Kd * errorD;
+    oldErrorP = errorP;
+
+    // Calculate PWM based on Error
+    currentLeftPWM = leftBaseSpeed + totalError / 124;
+    currentRightPWM = rightBaseSpeed - totalError / 124;
+
+    //  Serial.print(currentLeftPWM);
+    //  Serial.print(" ");
+    //  Serial.println(currentRightPWM);
+
+    // Update Motor PWM values
+    setLeftPWM(currentLeftPWM);
+    setRightPWM(currentRightPWM);
   }
 
   if (strait == 0) {
@@ -742,16 +754,22 @@ void turnCorrection() {
 
 
 
-    rightValid = wallRight();
-    leftValid = wallLeft();
-    targetAngle = 0;
+    rightValid = 0; //wallRight();
+    leftValid = 0; //wallLeft();
+    if (moveType == TURN_RIGHT) {
+      targetAngle = -110;
+    }
+    else {
+      targetAngle = 120;
+    }
     //    leftTicks = 0;
     //    rightTicks = 0;
   }
 
   if (strait == 1) {
-
+//    Serial.println(angle);
     if ((rightTicks + leftTicks) / 2 >= targetTicks) {
+      
       i = 0;
       angle = 0;
       oldErrorP = 0;
