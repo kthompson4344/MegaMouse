@@ -8,116 +8,80 @@ void setupSensors() {
   digitalWriteFast(diagHighPower, LOW);
 }
 
-//void readSensors() {
-//  // TODO Calibrate Better
-//  leftSensor = 1390.9 * (1 / getLn(readPair(left))) - 211.64;
-//  rightSensor = 7169.4 * (1 / getLn(readPair(right))) - 862.45;
-//  leftMiddleValue = 792.18 * (1 / getLn(readPair(diagl))) - 110.27 + 15; //15?
-//  rightMiddleValue = 391.17 * (1 / getLn(readPair(diagr))) - 63.22 + 15; //15?
-//}
-
-//void readSensors() {
-//  digitalWriteFast(TX[lf],HIGH);
-//  delayMicroseconds(60);
-//  leftFront = analogRead(RX[lf]);
-//  digitalWriteFast(TX[lf],LOW);
-//  delayMicroseconds(80);
-//  
-//  digitalWriteFast(TX[rf],HIGH);
-//  delayMicroseconds(60);
-//  rightFront = analogRead(RX[rf]);
-//  digitalWriteFast(TX[rf],LOW);
-//  delayMicroseconds(80);
-//  
-//  digitalWriteFast(TX[left],HIGH);
-//  digitalWriteFast(TX[right],HIGH);
-//  delayMicroseconds(60);
-//  leftSensor = analogRead(RX[left]);
-//  rightSensor = analogRead(RX[right]);
-//  digitalWriteFast(TX[left],LOW);
-//  digitalWriteFast(TX[right],LOW);
-//  delayMicroseconds(80);
-//  
-//  digitalWriteFast(TX[diagl],HIGH);
-//  digitalWriteFast(23, HIGH);
-//  delayMicroseconds(60);
-//  leftMiddleValue = analogRead(RX[diagl]);
-//  rightMiddleValue = analogRead(RX[diagr]);
-//  digitalWriteFast(TX[diagl],LOW);
-//  digitalWriteFast(23, LOW);
-//}
-
+// Runs on a timer every 80 microseconds.  Works like a state machine, goes through groups of sensors individually
+// and then updates their values.
 void readSensors() {
-  int leftFrontAmbient;
-  int rightFrontAmbient;
-  int leftSensorAmbient;
-  int rightSensorAmbient;
-  int leftMiddleAmbient;
-  int rightMiddleAmbient;
+  static int leftFrontAmbient = 0;
+  static int rightFrontAmbient = 0;
+  static int leftSensorAmbient = 0;
+  static int rightSensorAmbient = 0;
+  static int leftMiddleAmbient = 0;
+  static int rightMiddleAmbient = 0;
   static int state = 0;
   if (haveSensorReading == 0) {
     switch (state) {
-    case 0 :
-      leftFrontAmbient = analogRead(RX[lf]);
-      rightFrontAmbient = analogRead(RX[rf]);
-      leftSensorAmbient = analogRead(RX[left]);
-      rightSensorAmbient = analogRead(RX[right]);
-      leftMiddleAmbient = analogRead(RX[diagl]);
-      rightMiddleAmbient = analogRead(RX[diagr]);
-      break;
-      
-    case 1 :
-      digitalWriteFast(TX[lf],HIGH);
-      break;
-      
-    case 2 :
-      leftFront = analogRead(RX[lf]) - leftFrontAmbient;
-      digitalWriteFast(TX[lf],LOW);
-      break;
-      
-    case 3 :
-      digitalWriteFast(TX[rf],HIGH);
-      break;
-      
-    case 4 :
-      rightFront = analogRead(RX[rf]) - rightFrontAmbient;
-      digitalWriteFast(TX[rf],LOW);
-      break;
-      
-    case 5 :
-      digitalWriteFast(TX[left],HIGH);
-      digitalWriteFast(TX[right],HIGH);
-      break;
-      
-    case 6 :
-      leftSensor = analogRead(RX[left]) - leftSensorAmbient;
-      rightSensor = analogRead(RX[right]) - rightSensorAmbient;
-      digitalWriteFast(TX[left],LOW);
-      digitalWriteFast(TX[right],LOW);
-      break;
-      
-    case 7 :
-      digitalWriteFast(TX[diagl],HIGH);
-      digitalWriteFast(diagHighPower, HIGH);
-      break;
-      
-    case 8 :
-      leftMiddleValue = analogRead(RX[diagl]) - leftMiddleAmbient;
-      rightMiddleValue = analogRead(RX[diagr]) - rightMiddleAmbient;
-      digitalWriteFast(TX[diagl],LOW);
-      digitalWriteFast(diagHighPower, LOW);
-      break;
-  }
-  state++;
-  
-  if (state > 8) {
-    state = 0;
-    haveSensorReading = 1;
-  }
+      case 0: // Read ambient values.
+        leftFrontAmbient = analogRead(RX[lf]);
+        rightFrontAmbient = analogRead(RX[rf]);
+        leftSensorAmbient = analogRead(RX[left]);
+        rightSensorAmbient = analogRead(RX[right]);
+        leftMiddleAmbient = analogRead(RX[diagl]);
+        rightMiddleAmbient = analogRead(RX[diagr]);
+        break;
+
+      case 1: // Turn on left front sensor.
+        digitalWriteFast(TX[lf],HIGH);
+        break;
+
+      case 2: // Read left front sensor, then turn it off.
+        leftFront = analogRead(RX[lf]) - leftFrontAmbient;
+        digitalWriteFast(TX[lf],LOW);
+        break;
+
+      case 3: // Turn on right front sensor.
+        digitalWriteFast(TX[rf],HIGH);
+        break;
+
+      case 4: // Read right front sensor, then turn it off.
+        rightFront = analogRead(RX[rf]) - rightFrontAmbient;
+        digitalWriteFast(TX[rf],LOW);
+        break;
+
+      case 5: // Turn on side sensors.
+        digitalWriteFast(TX[left],HIGH);
+        digitalWriteFast(TX[right],HIGH);
+        break;
+
+      case 6: // Read side sensors, then turn them off.
+        leftSensor = analogRead(RX[left]) - leftSensorAmbient;
+        rightSensor = analogRead(RX[right]) - rightSensorAmbient;
+        digitalWriteFast(TX[left],LOW);
+        digitalWriteFast(TX[right],LOW);
+        break;
+
+      case 7: // Turn on diagonal sensors.
+        digitalWriteFast(TX[diagl],HIGH);
+        digitalWriteFast(diagHighPower, HIGH);
+        break;
+
+      case 8: // Read diagonal sensors, then turn them off.
+        leftMiddleValue = analogRead(RX[diagl]) - leftMiddleAmbient;
+        rightMiddleValue = analogRead(RX[diagr]) - rightMiddleAmbient;
+        digitalWriteFast(TX[diagl],LOW);
+        digitalWriteFast(diagHighPower, LOW);
+        break;
+    }
+    ++state;
+
+    if (state > 8) {
+      state = 0;
+      haveSensorReading = true;
+    }
   }
 }
 
 void displaySensors() {
+
 //   mySerial.print(leftFront);
 //   mySerial.print(" ");
 //   mySerial.print(leftMiddleValue);
@@ -129,18 +93,20 @@ void displaySensors() {
    mySerial.println(rightMiddleValue);
 //   mySerial.print(" ");
 //   mySerial.println(rightFront);
- }
  
- boolean wallFront() {
+
+
+}
+
+ 
+bool wallFront() {
   return (leftFront > 250 && rightFront > 250);
 }
 
-boolean wallLeft() {
-  //  readSensors();
+bool wallLeft() {
   return (leftSensor > hasLeftWall);
 }
 
-boolean wallRight() {
-  //  readSensors();
+bool wallRight() {
   return (rightSensor > hasRightWall);
 }

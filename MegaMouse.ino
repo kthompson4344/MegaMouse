@@ -1,7 +1,7 @@
 // Teensy 3 I2C Library
 #include <i2c_t3.h>
 #include "Gyro.h"
-#include "Motors.h"t
+#include "Motors.h"
 #include "Sensors.h"
 #include "Profiles.h"
 #include <SoftwareSerial.h>
@@ -60,9 +60,8 @@ void setup() {
   sensorTimer.begin(readSensors, 80);
   sensorTimer.priority(250);
 
-
-
   pinMode(LED, OUTPUT);
+
   pinMode(buttonPin, INPUT_PULLUP);
 
   pinMode(intPin, INPUT);
