@@ -118,17 +118,17 @@ void readSensors() {
 }
 
 void displaySensors() {
-   Serial.print(leftFront);
-   Serial.print(" ");
-   Serial.print(leftMiddleValue);
-   Serial.print(" ");
-   Serial.print(leftSensor);
-   Serial.print(" ");
-   Serial.print(rightSensor);
-   Serial.print(" ");
-   Serial.print(rightMiddleValue);
-   Serial.print(" ");
-   Serial.println(rightFront);
+//   mySerial.print(leftFront);
+//   mySerial.print(" ");
+//   mySerial.print(leftMiddleValue);
+//   mySerial.print(" ");
+//   mySerial.print(leftSensor);
+//   mySerial.print(" ");
+//   mySerial.print(rightSensor);
+//   mySerial.print(" ");
+   mySerial.println(rightMiddleValue);
+//   mySerial.print(" ");
+//   mySerial.println(rightFront);
  }
  
  boolean wallFront() {

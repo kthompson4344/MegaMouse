@@ -4,6 +4,7 @@
 #include "Motors.h"t
 #include "Sensors.h"
 #include "Profiles.h"
+#include <SoftwareSerial.h>
 
 #define hasLeftWall 800
 #define hasRightWall 800
@@ -12,6 +13,10 @@ int rightBaseSpeed = 0;
 // PID Constants
 #define Kp 16
 #define Kd 10
+
+const int rxPin = 0;
+const int txPin = 16;
+
 volatile bool rightValid = 1;
 volatile bool leftValid = 1;
 bool go = 0;
@@ -19,7 +24,7 @@ volatile bool needMove = 1;
 volatile bool haveSensorReading = 1;
 IntervalTimer correctionTimer;
 IntervalTimer sensorTimer;
-IntervalTimer speedTimer;
+SoftwareSerial mySerial =  SoftwareSerial(rxPin, txPin);
 volatile float angle = 0;
 
 // mm/s
@@ -35,14 +40,14 @@ volatile enum {
 } moveType;
 
 const int buttonPin = 24;
-const int LED1 = 11;
-const int LED2 = 16;
+const int LED = 11;
 
 void setup() {
 
   float degreesTraveled;
   float initialZ;
   Serial.begin(115200);
+  mySerial.begin(115200);
 
   // 12 bit ADC resolution
   analogReadResolution(12);
@@ -56,8 +61,8 @@ void setup() {
   sensorTimer.priority(250);
 
 
-  pinMode(LED1, OUTPUT);
-  pinMode(LED2, OUTPUT);
+
+  pinMode(LED, OUTPUT);
   pinMode(buttonPin, INPUT_PULLUP);
 
   pinMode(intPin, INPUT);
@@ -186,7 +191,7 @@ void setup() {
 void loop() {
 
   //Serial.println(rightTicks);
-    wallFollow();
+//    wallFollow();
   //
   //  //displaySensors();
   //  setLeftPWM(0);
@@ -200,12 +205,13 @@ void loop() {
   //  Serial.print("Wall Front = ");
   //  Serial.println(wallFront());
 //    displaySensors();
-//        delay(100);
+//        delay(1);
 }
 
 //mack calls certain number of move forwards, we add however many ticks for every move forward
 
 void correction() {
+  displaySensors();
 //  readSensors();
   switch (moveType) {
     case FORWARD :
