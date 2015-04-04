@@ -11,15 +11,25 @@
 int leftBaseSpeed = 0;
 int rightBaseSpeed = 0;
 // PID Constants
-#define Kp 16
+#define straitKp 16
+#define turnKp 16
 #define Kd 10
 
 const int rxPin = 0;
 const int txPin = 16;
 
+int ticksR[1000];
+int ticksL[1000];
+int leftM[1000];
+int rightM[1000];
+int leftS[1000];
+int rightS[1000];
+int readings = 0;
+
+volatile bool firstCell = 1;
 volatile bool rightValid = 1;
 volatile bool leftValid = 1;
-bool go = 0;
+volatile bool go = 0;
 volatile bool needMove = 1;
 volatile bool haveSensorReading = 1;
 IntervalTimer correctionTimer;
@@ -46,7 +56,7 @@ void setup() {
 
   float degreesTraveled;
   float initialZ;
-  Serial.begin(115200);
+//  Serial.begin(9600);
   mySerial.begin(115200);
 
   // 12 bit ADC resolution
@@ -109,24 +119,24 @@ void setup() {
 //  pivotTurnRight();
   //while(1);
   //pivotTurnRight();
-
-  //    moveForward();
-  //    while (needMove == 0);
-  //    moveForward();
-  //    while (needMove == 0);
-  //    moveForward();
-  //    while (needMove == 0);
-  ////    digitalWrite(LED2,LOW);
-  //    turnRight();
-  ////    turnLeft();
-  //    while (needMove == 0);
-  //    turnRight();
-  ////    turnLeft();
-  //    while (needMove == 0);
-  //    moveForward();
-  //    while (needMove == 0);
-  //    moveForward();
-  //    while (needMove == 0);
+//go = 1;
+//    moveForward();
+//    while (needMove == 0);
+//    moveForward();
+//    while (needMove == 0);
+//    moveForward();
+//    while (needMove == 0);
+//  ////    digitalWrite(LED2,LOW);
+//      turnRight();
+//  ////    turnLeft();
+//      while (needMove == 0);
+//  //    turnRight();
+//      turnLeft();
+//      while (needMove == 0);
+//      turnRight();
+//      while (needMove == 0);
+//      moveForward();
+//      while (needMove == 0);
   //    moveForward();
   //    while (needMove == 0);
   //    moveForward();
@@ -148,8 +158,24 @@ void setup() {
   //    turnRight();
   //    while (needMove == 0);
   //    while(1) {
-  //    setLeftPWM(0);
-  //    setRightPWM(0);
+//    go = 0;
+//    sensorTimer.end();
+//    correctionTimer.end();
+//      setLeftPWM(0);
+//      setRightPWM(0);
+//      for(int i = 0; i < readings; i++) {
+//        mySerial.print(ticksL[i]);
+//        mySerial.print(",");
+//        mySerial.print(ticksR[i]);
+//        mySerial.print(",");
+//        mySerial.print(rightM[i]);
+//        mySerial.print(",");
+//        mySerial.print(leftM[i]);
+//        mySerial.print(",");
+//        mySerial.print(rightS[i]);
+//        mySerial.print(",");
+//        mySerial.println(leftS[i]);
+//      }
   //    }
   //    moveForward();
   //    while (needMove == 0);
@@ -190,8 +216,8 @@ void setup() {
 void loop() {
 
   //Serial.println(rightTicks);
-//    wallFollow();
-  //
+    wallFollow();
+
   //  //displaySensors();
   //  setLeftPWM(0);
   //  setRightPWM(0);
@@ -210,7 +236,7 @@ void loop() {
 //mack calls certain number of move forwards, we add however many ticks for every move forward
 
 void correction() {
-  displaySensors();
+//  displaySensors();
 //  readSensors();
   switch (moveType) {
     case FORWARD :
@@ -225,14 +251,32 @@ void correction() {
       turnCorrection();
       break;
   }
+  if(go == 1) {
+  ticksR[readings] = rightTicks;
+  ticksL[readings] = leftTicks;
+  rightM[readings] = rightMiddleValue;
+  leftM[readings] = leftMiddleValue;
+  rightS[readings] = rightSensor;
+  leftS[readings] = leftSensor;
+  if(readings<999) {
+  readings++;
+  }
+  }
   haveSensorReading = 0;
 }
 
 void moveForward() {
 //  digitalWriteFast(LED2, HIGH);
 //          digitalWriteFast(LED1, HIGH);
+  if (firstCell == 1) {
+    rightTicks = 70;
+    leftTicks = 70;
+    firstCell = 0;
+  }
+  else {
   rightTicks = 0;
   leftTicks = 0;
+  }
   leftBaseSpeed = 240;//240
   rightBaseSpeed = 240;//240
   if (wallRight()) {
@@ -587,7 +631,7 @@ void forwardCorrection() {
   }
 
 
-  totalError = Kp * errorP + Kd * errorD;
+  totalError = straitKp * errorP + Kd * errorD;
   oldErrorP = errorP;
 
   // Calculate PWM based on Error
@@ -613,7 +657,7 @@ void turnCorrection() {
   static float targetAngle;
   static int i = 0;
   static bool strait = 0;
-  const int targetTicks = 145;
+  const int targetTicks = 140;
   //  const int targetTicks = 120;//curve3
 
   if (strait == 0) {
@@ -642,7 +686,7 @@ void turnCorrection() {
 
     rightTicks = 0;
     leftTicks = 0;
-    totalError = Kp * errorP + Kd * errorD;
+    totalError = turnKp * errorP + Kd * errorD;
     oldErrorP = errorP;
 
     // Calculate PWM based on Error
@@ -738,7 +782,7 @@ void turnCorrection() {
       errorD = errorP - oldErrorP;
       //    }
     }
-    totalError = Kp * errorP + Kd * errorD;
+    totalError = straitKp * errorP + Kd * errorD;
     oldErrorP = errorP;
 
     // Calculate PWM based on Error
@@ -778,20 +822,20 @@ void turnCorrection() {
 
   if (strait == 1) {
 //    Serial.println(angle);
-//    if (wallFront()) {
-//      const int frontStop = 275;
-//      if ((leftFront + rightFront)/2 >= frontStop) {
-//        i = 0;
-//        angle = 0;
-//        oldErrorP = 0;
-//        rightTicks = 0;
-//        leftTicks = 0;
-//        moveType = NO;
-//        needMove = 1;
-//        strait = 0;
-//      }
-//    }
-//    else {
+    if (wallFront()) {
+      const int frontStop = 500;
+      if ((leftFront + rightFront)/2 >= frontStop) {
+        i = 0;
+        angle = 0;
+        oldErrorP = 0;
+        rightTicks = 0;
+        leftTicks = 0;
+        moveType = NO;
+        needMove = 1;
+        strait = 0;
+      }
+    }
+    else {
     
     if ((rightTicks + leftTicks) / 2 >= targetTicks) {
       
@@ -804,7 +848,7 @@ void turnCorrection() {
       needMove = 1;
       strait = 0;
     }
-//    }
+    }
   }
 }
 

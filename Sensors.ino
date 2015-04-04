@@ -90,7 +90,7 @@ void displaySensors() {
 //   mySerial.print(" ");
 //   mySerial.print(rightSensor);
 //   mySerial.print(" ");
-   mySerial.println(rightMiddleValue);
+
 //   mySerial.print(" ");
 //   mySerial.println(rightFront);
  
