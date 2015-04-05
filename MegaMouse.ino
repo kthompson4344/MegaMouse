@@ -18,7 +18,6 @@ int rightBaseSpeed = 0;
 const int rxPin = 0;
 const int txPin = 16;
 
-
 int ticksR[1000];
 int ticksL[1000];
 int leftM[1000];
@@ -94,7 +93,6 @@ void setup() {
   //      setRightPWM(30);
   //    }
   //turnRight();
-  //  go = 1;
   //  turnRight();
   //turnLeft();
 
@@ -156,7 +154,7 @@ void setup() {
   //    turnRight();
   //    while (needMove == 0);
   //    while(1) {
-  //    go = 0;
+go = 1;
   //    sensorTimer.end();
   //    correctionTimer.end();
   //      setLeftPWM(0);
@@ -251,16 +249,11 @@ void correction() {
       turnCorrection();
       break;
   }
-  //  if(go == 1) {
-  //  ticksR[readings] = rightTicks;
-  //  ticksL[readings] = leftTicks;
-  //  rightM[readings] = rightMiddleValue;
-  //  leftM[readings] = leftMiddleValue;
-  //  rightS[readings] = rightSensor;
-  //  leftS[readings] = leftSensor;
-  //  if(readings<999) {
-  //  readings++;
-  //  }
+//    if(go == 1) {
+//      mySerial.print((leftTicks+rightTicks)/2);
+//      mySerial.print(" ");
+//      mySerial.println(rightSensor);
+//    }
   //  }
   haveSensorReading = 0;
 }
@@ -269,7 +262,7 @@ void moveForward() {
   //  digitalWriteFast(LED2, HIGH);
 
   //          digitalWriteFast(LED1, HIGH);
-  if (firstCell == 1) {
+  if (firstCell == true) {
     rightTicks = 70;
     leftTicks = 70;
     firstCell = 0;
@@ -298,8 +291,6 @@ void moveForward() {
 }
 
 void turnRight() {
-  //  digitalWriteFast(LED2, HIGH);
-  //  digitalWriteFast(LED1, LOW);
   leftBaseSpeed = 240;
   rightBaseSpeed = 240;
   moveType = TURN_RIGHT;
@@ -307,8 +298,6 @@ void turnRight() {
 }
 
 void turnLeft() {
-  //  digitalWriteFast(LED2, LOW);
-  //  digitalWriteFast(LED1, HIGH);
   leftBaseSpeed = 240;
   rightBaseSpeed = 240;
   moveType = TURN_LEFT;
@@ -328,33 +317,55 @@ void turnAround() {
   rightBaseSpeed = 240;
   moveType = NO;
 
-  while (!leftStop || !rightStop) {
-    if (leftFront <= frontLeftStop) {
-      setLeftPWM(leftBaseSpeed);
-    }
-    else {
-      setLeftPWM(0);
-      leftStop = 1;
-    }
-    if (rightFront <= frontRightStop) {
-      setRightPWM(rightBaseSpeed);
-    }
-    else {
-      setRightPWM(0);
-      rightStop = 1;
-    }
+  while (leftFront < frontLeftStop || rightFront < frontRightStop) {
+    errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
+    // middle of cell
+    errorD = errorP;
+    totalError = straightKp * errorP + Kd * errorD;
+
+
+  // Calculate PWM based on Error
+  currentLeftPWM = leftBaseSpeed + totalError / 124;
+  currentRightPWM = rightBaseSpeed - totalError / 124;
+
+  // Update Motor PWM values
+  setLeftPWM(currentLeftPWM);
+  setRightPWM(currentRightPWM);
+//    if (leftFront <= frontLeftStop) {
+//      setLeftPWM(leftBaseSpeed);
+//    }
+//    else {
+//      setLeftPWM(0);
+//      leftStop = 1;
+//    }
+//    if (rightFront <= frontRightStop) {
+//      setRightPWM(rightBaseSpeed);
+//    }
+//    else {
+//      setRightPWM(0);
+//      rightStop = 1;
+//    }
   }
+  setRightPWM(0);
+  setLeftPWM(0);
   delay(200);
   leftStop = false;
   rightStop = false;
 
   pivotTurnRight();
 
-  leftTicks = 140;
-  rightTicks = 140;
   angle = 0;
-
-  moveForward();
+  delay(500);
+  setLeftPWM(-150);
+  setRightPWM(-150);
+  delay(300);
+  for (int i = -150; i < 0; i++) {
+    setLeftPWM(i);
+    setRightPWM(i);
+  }
+  delay(500);
+  firstCell = true;
+  needMove = true;
 }
 
 void forwardCorrection() {
@@ -366,9 +377,9 @@ void forwardCorrection() {
   const int pegNoWalls = 1000;
   const int pegWallFront = 1000;
 
-  const int wallBackTicks = 240;
-  const int noWallTicks = 218;
-  const int frontWallTicks = 215;
+  const int wallBackTicks = 232;
+  const int noWallTicks = 209;
+  const int frontWallTicks = 204;
 
   // no walls right and left reach 1000 at 213
   // no wall front, wall back, drops below 800 at 222
@@ -396,19 +407,6 @@ void forwardCorrection() {
   static bool currentWallLeft = true;
   static bool currentWallRight = true;
   static bool ticksDecided = false;
-  //  getAres();
-  //  Serial.println("3");
-  //  digitalWrite(LED2,HIGH);
-  //  az = (float)readAccelData()*aRes - accelBias[2];
-  //  //  delay(500);
-  //  Serial.println(az);
-  //  if (az > 2) {
-  //    setLeftPWM(0);
-  //    setRightPWM(0);
-  //    leftBaseSpeed = 0;
-  //    rightBaseSpeed = 0;
-  //    moveType = NO;
-  //  }
 
   // Next Cell Wall Detection
   if ((rightTicks + leftTicks) / 2 >= readingTicks && !nextCellDecided) {
@@ -431,11 +429,6 @@ void forwardCorrection() {
 
 
   if (leftValid && rightValid) {
-    //    digitalWriteFast(LED2, HIGH);
-    //    digitalWriteFast(LED1, HIGH);
-    //    digitalWriteFast(LED1, HIGH);
-    //    digitalWriteFast(LED2, HIGH);
-    //    Serial.println("Has Both");
     angle = 0;
     targetAngle = 0;
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
@@ -448,12 +441,7 @@ void forwardCorrection() {
   }
   else if (leftValid) {
     const int wallDist = 1900; // Make this bigger to move closer to the wall
-    //    digitalWriteFast(LED1, HIGH);
-    //    digitalWriteFast(LED2, LOW);
-    //    digitalWriteFast(LED1, HIGH);
-    //    digitalWriteFast(LED2, LOW);
-    //    Serial.println("Has Left");
-    // Only left wall, insert one wall correction here
+    // Only left wall
     // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
     getGres();
     gz = (float)readGyroData() * gRes - gyroBias[2];
@@ -463,13 +451,8 @@ void forwardCorrection() {
 
   }
   else if (rightValid) {
-    const int wallDist = 2000; //Make this bigger to move closer to the wall
-    //    digitalWriteFast(LED1, LOW);
-    //    digitalWriteFast(LED2, HIGH);
-    //    digitalWriteFast(LED1, LOW);
-    //    digitalWriteFast(LED2, HIGH);
-    //    Serial.println("Has Right");
-    // Only right wall, insert one wall correction here (TODO?)
+    const int wallDist = 1900; //Make this bigger to move closer to the wall
+    // Only right wall
     getGres();
     gz = (float)readGyroData() * gRes - gyroBias[2];
     angle += 2 * (gz) * 0.001;
@@ -528,7 +511,7 @@ void forwardCorrection() {
   }
 
   // No walls in next cell or current cell
-  if (!currentWallLeft !nextLeftValid && !ticksDecided) {
+  if (!currentWallLeft && !nextLeftValid && !ticksDecided) {
     if (leftSensor >= pegNoWalls) {
       leftTicks = noWallTicks;
       rightTicks = noWallTicks;
@@ -564,8 +547,6 @@ void forwardCorrection() {
     oldErrorP = 0;
     ticksDecided = 0;
     needMove = 1;
-    // rightTicks = 0;
-    // leftTicks = 0;
     nextCellDecided = 0;
     moveType = NO;
     endCell = false;
@@ -578,10 +559,6 @@ void forwardCorrection() {
   // Calculate PWM based on Error
   currentLeftPWM = leftBaseSpeed + totalError / 124;
   currentRightPWM = rightBaseSpeed - totalError / 124;
-
-  // Serial.print(currentLeftPWM);
-  // Serial.print(" ");
-  // Serial.println(currentRightPWM);
 
   // Update Motor PWM values
   setLeftPWM(currentLeftPWM);
@@ -598,31 +575,68 @@ void turnCorrection() {
   static bool turn = false;
   static bool straight = 0;
   const int targetTicks = 140;
-  //  const int targetTicks = 120;//curve3
-
+  const int frontOffset = 50;//difference between left and right front sensors when lined up with the wall
 
   if (!straight) {
-    //    digitalWriteFast(LED1, HIGH);
-    //    digitalWriteFast(LED2, HIGH);
     if (turn == true) {
-      targetAngle = curve2[i];
-      getGres();
+//      if (i < 30) {
+//        if (wallLeft() && wallRight()) {
+//          angle = 0;
+//          targetAngle = 0;
+//          // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
+//          errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
+//          // middle of cell
+//          errorD = errorP - oldErrorP;
+//          //    getGres();
+//          //    gz = (float)readGyroData() * gRes - gyroBias[2];
+//          //    straightAngle += 2 * (gz) * 0.001;
+//        }
+//        else if (wallLeft()) {
+//          const int wallDist = 1900; // Make this bigger to move closer to the wall
+//          // Only left wall
+//          // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
+//          getGres();
+//          gz = (float)readGyroData() * gRes - gyroBias[2];
+//          angle += 2 * (gz) * 0.001;
+//          errorP = 20 * (angle - targetAngle) + .5 * (leftSensor - wallDist);
+//          errorD = errorP - oldErrorP;
+//
+//        }
+//        else if (wallRight()) {
+//          const int wallDist = 2000; //Make this bigger to move closer to the wall
+//          // Only right wall
+//          getGres();
+//          gz = (float)readGyroData() * gRes - gyroBias[2];
+//          angle += 2 * (gz) * 0.001;
+//          errorP = 20 * (angle - targetAngle) - .5 * (rightSensor - wallDist);
+//          errorD = errorP - oldErrorP;
+//        }
+//        else {
+//          getGres();
+//          gz = (float)readGyroData() * gRes - gyroBias[2];
+//          angle += 2 * (gz) * 0.001;
+//          errorP = 20 * (angle - targetAngle);
+//          errorD = errorP - oldErrorP;
+//        }
+//      }
 
-      gz = (int)readGyroData() * gRes - gyroBias[2];
+        targetAngle = curve2[i];
+        getGres();
 
-      if (moveType == TURN_RIGHT) {
-        angle += 1.37 * (gz) * 0.001; // comment out for curve3
-        // angle += 1 * (gz) * .001;
+        gz = (int)readGyroData() * gRes - gyroBias[2];
 
-        errorP = 100 * (angle + targetAngle); // comment out for curve3
-      }
-      else {
-        angle += 1.375 * (gz) * 0.001; // comment out for curve3
-        // angle += 1 * (gz) * .001;
-        errorP = 100 * (angle - targetAngle); // comment out for curve3
-      }
+        if (moveType == TURN_RIGHT) {
+          angle += 1.37 * (gz) * 0.001;
 
-      // errorP = 20 * (.85*gz + targetAngle); //curve3
+
+          errorP = 100 * (angle + targetAngle);
+        }
+        else {
+          angle += 1.375 * (gz) * 0.001;
+
+          errorP = 100 * (angle - targetAngle);
+        }
+      
       errorD = errorP - oldErrorP;
 
       rightTicks = 0;
@@ -633,10 +647,6 @@ void turnCorrection() {
       // Calculate PWM based on Error
       currentLeftPWM = leftBaseSpeed + totalError / 124;
       currentRightPWM = rightBaseSpeed - totalError / 124;
-
-      //  Serial.print(currentLeftPWM);
-      //  Serial.print(" ");
-      //  Serial.println(currentRightPWM);
 
       // Update Motor PWM values
       setLeftPWM(currentLeftPWM);
@@ -649,7 +659,7 @@ void turnCorrection() {
         getGres();
         gz = (float)readGyroData() * gRes - gyroBias[2];
         angle += 1 * (gz) * 0.001;
-        errorP = 2 * (rightFront - leftFront + 10);
+        errorP = 3 * (rightFront - leftFront - frontOffset);
 
 
         errorD = errorP - oldErrorP;
@@ -660,10 +670,6 @@ void turnCorrection() {
         // Calculate PWM based on Error
         currentLeftPWM = leftBaseSpeed + totalError / 124;
         currentRightPWM = rightBaseSpeed - totalError / 124;
-
-        // Serial.print(currentLeftPWM);
-        // Serial.print(" ");
-        // Serial.println(currentRightPWM);
 
         // Update Motor PWM values
         setLeftPWM(currentLeftPWM);
@@ -677,9 +683,6 @@ void turnCorrection() {
         turn = true;
       }
     }
-    // targetAngle = curve3[i];
-
-
   }
   else {
     const int wallFrontValue = 350;
@@ -687,13 +690,13 @@ void turnCorrection() {
     gz = (float)readGyroData() * gRes - gyroBias[2];
     angle += 1 * (gz) * 0.001;
     if (rightFront > wallFrontValue && leftFront > wallFrontValue) {
-      // errorP = 10* (angle - targetAngle) + 2 * (rightFront - leftFront + 10);
-      errorP = 2 * (rightFront - leftFront + 10);
+      errorP = 3 * (rightFront - leftFront - frontOffset);
     }
     else {
       errorP = 20 * (angle - targetAngle);
     }
-    errorD = errorP - oldErrorP;
+
+ 
 
     totalError = straightKp * errorP + Kd * errorD;
     oldErrorP = errorP;
@@ -702,18 +705,12 @@ void turnCorrection() {
     currentLeftPWM = leftBaseSpeed + totalError / 124;
     currentRightPWM = rightBaseSpeed - totalError / 124;
 
-    // Serial.print(currentLeftPWM);
-    // Serial.print(" ");
-    // Serial.println(currentRightPWM);
-
     // Update Motor PWM values
     setLeftPWM(currentLeftPWM);
     setRightPWM(currentRightPWM);
   }
 
   if (i >= curve2Time && !straight) {
-
-    //  if (i >= curve3Time) {
     straight = true;
 
     leftValid = 0;
@@ -725,13 +722,9 @@ void turnCorrection() {
     else {
       targetAngle = 120;
     }
-    //    leftTicks = 0;
-    //    rightTicks = 0;
   }
 
   if (straight) {
-    //    Serial.println(angle);
-
     if (wallFront()) {
       const int frontStop = 500;
       if ((leftFront + rightFront) / 2 >= frontStop) {
@@ -747,10 +740,7 @@ void turnCorrection() {
       }
     }
     else {
-
-
       if ((rightTicks + leftTicks) / 2 >= targetTicks) {
-
         i = 0;
         angle = 0;
         oldErrorP = 0;
@@ -761,12 +751,9 @@ void turnCorrection() {
         straight = false;
         turn = false;
       }
-
     }
-
   }
 }
-
 
 void pivotTurnRight() {
   float angle = 0.0;
@@ -778,7 +765,7 @@ void pivotTurnRight() {
   // Gyro calibrated for each speed or turning is not accurate
   float degreesTraveled = 0;
   const int turnSpeed = 450;
-  const float targetDegrees = 165;
+  const float targetDegrees = 160;
   // const int turnSpeed = 45;
   // const int targetDegrees = 85.5
   // const int turnSpeed = 40;
@@ -795,7 +782,7 @@ void pivotTurnRight() {
   gz = (float)readGyroData() * gRes - gyroBias[2];
   initialZ = gz;// May not be necessary
   count = millis();
-  setLeftPWM(turnSpeed-50);
+  setLeftPWM(turnSpeed - 20);
   setRightPWM(-turnSpeed);
   while (degreesTraveled >= -targetDegrees) {
     uint32_t deltat = millis() - count;
@@ -830,7 +817,6 @@ void wallFollow() {
     else {
       turnAround();
     }
-
   }
 
 }
