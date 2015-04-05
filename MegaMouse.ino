@@ -116,8 +116,31 @@ void setup() {
   //while(1);
   //pivotTurnRight();
   //go = 1;
-  //    moveForward();
-  //    while (needMove == 0);
+//  leftBaseSpeed = 240;
+//  rightBaseSpeed = 240;
+//      moveForward();
+//      while (needMove == 0) {
+//        accelerate(5);
+//      }
+//      moveForward();
+//      while (needMove == 0) {
+//        accelerate(5);
+//      }
+//      moveForward();
+//      while (needMove == 0) {
+//        accelerate(5);
+//      }
+//      moveForward();
+//      while (needMove == 0) {
+//        accelerate(5);
+//      }
+//      moveForward();
+//      while (needMove == 0) {
+//        accelerate(5);
+//      }
+//      setLeftPWM(0);
+//      setRightPWM(0);
+
   //    moveForward();
   //    while (needMove == 0);
   //    moveForward();
@@ -185,14 +208,14 @@ go = 1;
   //    while (needMove == 0);
   //    moveForward();
   //    while (needMove == 0);
-  //    moveForward();
-  //    while (needMove == 0);
-  //////    digitalWrite(LED2,LOW);
-  //    turnRight();
-  //    while (needMove == 0);
-  //    while(1) {
-  //    setLeftPWM(0);
-  //    setRightPWM(0);
+//      moveForward();
+//      while (needMove == 0);
+//  //////    digitalWrite(LED2,LOW);
+//      turnt();
+//      while (needMove == 0);
+//  //    while(1) {
+//        setLeftPWM(0);
+//        setRightPWM(0);
   //    Serial.print((rightTicks+leftTicks)/2);
   //    Serial.print(" ");
   //    Serial.print(leftSensor);
@@ -355,15 +378,15 @@ void turnAround() {
   pivotTurnRight();
 
   angle = 0;
-  delay(500);
+  delay(200);
   setLeftPWM(-150);
   setRightPWM(-150);
-  delay(300);
+  delay(350);
   for (int i = -150; i < 0; i++) {
     setLeftPWM(i);
     setRightPWM(i);
   }
-  delay(500);
+  delay(200);
   firstCell = true;
   needMove = true;
 }
@@ -819,4 +842,43 @@ void wallFollow() {
     }
   }
 
+}
+
+void accelerate(int numCells) {
+  int cellNumb = 1;
+  static bool cellDecided = 0;
+  if ((rightTicks+leftTicks/2) >= 320 && cellDecided == 0) {
+    ++cellNumb;
+    cellDecided = 1;
+  }
+  
+  if ((rightTicks + leftTicks)/2 <= 10) {
+    cellDecided = 0;
+  }
+  if (cellNumb == 1) {
+    static int i=0;
+    ++i;
+    if (i >= 10) {
+      leftBaseSpeed += 1;
+      rightBaseSpeed += 1;
+      i = 0;
+    }
+    if (leftBaseSpeed >= 400) {
+    
+    rightBaseSpeed = 400;
+    leftBaseSpeed = 400;
+    }
+  }
+  if (cellNumb == numCells-1 || cellNumb == numCells) {
+    static int i=0;
+    if (i >= 10) {
+      leftBaseSpeed -= 1;
+      rightBaseSpeed -= 1;
+      i = 0;
+    }
+    if (leftBaseSpeed < 240 || rightBaseSpeed < 240) {
+      leftBaseSpeed = 240;
+      rightBaseSpeed = 240;
+    }
+  }
 }
