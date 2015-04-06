@@ -177,7 +177,7 @@ void setup() {
   //    turnRight();
   //    while (needMove == 0);
   //    while(1) {
-go = 1;
+  go = true;
   //    sensorTimer.end();
   //    correctionTimer.end();
   //      setLeftPWM(0);
@@ -278,17 +278,17 @@ void correction() {
 //      mySerial.println(rightSensor);
 //    }
   //  }
-  haveSensorReading = 0;
+  haveSensorReading = false;
 }
 
 void moveForward() {
   //  digitalWriteFast(LED2, HIGH);
 
   //          digitalWriteFast(LED1, HIGH);
-  if (firstCell == true) {
+  if (firstCell) {
     rightTicks = 70;
     leftTicks = 70;
-    firstCell = 0;
+    firstCell = false;
   }
   else {
     rightTicks = 0;
@@ -297,18 +297,8 @@ void moveForward() {
   leftBaseSpeed = 240;//240
   rightBaseSpeed = 240;//240
 
-  if (wallRight()) {
-    rightValid = true;
-  }
-  else {
-    rightValid = false;
-  }
-  if (wallLeft()) {
-    leftValid = true;
-  }
-  else {
-    leftValid = false;
-  }
+  rightValid = wallRight();
+  leftValid = wallLeft();
   moveType = FORWARD;
   needMove = false;
 }
@@ -346,28 +336,29 @@ void turnAround() {
     errorD = errorP;
     totalError = straightKp * errorP + Kd * errorD;
 
+    // Calculate PWM based on Error
+    currentLeftPWM = leftBaseSpeed + totalError / 124;
+    currentRightPWM = rightBaseSpeed - totalError / 124;
 
-  // Calculate PWM based on Error
-  currentLeftPWM = leftBaseSpeed + totalError / 124;
-  currentRightPWM = rightBaseSpeed - totalError / 124;
-
-  // Update Motor PWM values
-  setLeftPWM(currentLeftPWM);
-  setRightPWM(currentRightPWM);
-//    if (leftFront <= frontLeftStop) {
-//      setLeftPWM(leftBaseSpeed);
-//    }
-//    else {
-//      setLeftPWM(0);
-//      leftStop = 1;
-//    }
-//    if (rightFront <= frontRightStop) {
-//      setRightPWM(rightBaseSpeed);
-//    }
-//    else {
-//      setRightPWM(0);
-//      rightStop = 1;
-//    }
+    // Update Motor PWM values
+    setLeftPWM(currentLeftPWM);
+    setRightPWM(currentRightPWM);
+#if 0
+    if (leftFront <= frontLeftStop) {
+      setLeftPWM(leftBaseSpeed);
+    }
+    else {
+      setLeftPWM(0);
+      leftStop = 1;
+    }
+    if (rightFront <= frontRightStop) {
+      setRightPWM(rightBaseSpeed);
+    }
+    else {
+      setRightPWM(0);
+      rightStop = 1;
+    }
+#endif
   }
   setRightPWM(0);
   setLeftPWM(0);
@@ -377,12 +368,12 @@ void turnAround() {
 
   pivotTurnRight();
 
-  angle = 0;
+  angle = 0.0;
   delay(200);
   setLeftPWM(-150);
   setRightPWM(-150);
   delay(350);
-  for (int i = -150; i < 0; i++) {
+  for (int i = -150; i < 0; ++i) {
     setLeftPWM(i);
     setRightPWM(i);
   }
@@ -424,7 +415,8 @@ void forwardCorrection() {
   //  static float angle;
   static int lastTicksL;
   static int lastTicksR;
-  static int targetAngle = 0;
+  static int targetAngle = 0; // TODO: This variable never changes!  Also, all we ever do is subtract it from something
+                              // else, so do we really need it at all?
   static float straightAngle = 0.0;
   static bool endCell = false;
   static bool currentWallLeft = true;
@@ -447,12 +439,11 @@ void forwardCorrection() {
   if ((rightTicks + leftTicks) / 2 >= newSideTicks) {
     leftValid = nextLeftValid;
     rightValid = nextRightValid;
-    // nextCellDecided = 0;
+    // nextCellDecided = false;
   }
 
-
   if (leftValid && rightValid) {
-    angle = 0;
+    angle = 0.0;
     targetAngle = 0;
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
     errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
@@ -568,9 +559,9 @@ void forwardCorrection() {
     currentWallLeft = nextLeftValid;
     currentWallRight = nextRightValid;
     oldErrorP = 0;
-    ticksDecided = 0;
-    needMove = 1;
-    nextCellDecided = 0;
+    ticksDecided = false;
+    needMove = true;
+    nextCellDecided = false;
     moveType = NO;
     endCell = false;
   }
@@ -598,68 +589,66 @@ void turnCorrection() {
   static bool turn = false;
   static bool straight = 0;
   const int targetTicks = 140;
-  const int frontOffset = 50;//difference between left and right front sensors when lined up with the wall
+  const int frontOffset = 50; // difference between left and right front sensors when lined up with the wall
 
   if (!straight) {
-    if (turn == true) {
-//      if (i < 30) {
-//        if (wallLeft() && wallRight()) {
-//          angle = 0;
-//          targetAngle = 0;
-//          // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
-//          errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
-//          // middle of cell
-//          errorD = errorP - oldErrorP;
-//          //    getGres();
-//          //    gz = (float)readGyroData() * gRes - gyroBias[2];
-//          //    straightAngle += 2 * (gz) * 0.001;
-//        }
-//        else if (wallLeft()) {
-//          const int wallDist = 1900; // Make this bigger to move closer to the wall
-//          // Only left wall
-//          // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
-//          getGres();
-//          gz = (float)readGyroData() * gRes - gyroBias[2];
-//          angle += 2 * (gz) * 0.001;
-//          errorP = 20 * (angle - targetAngle) + .5 * (leftSensor - wallDist);
-//          errorD = errorP - oldErrorP;
-//
-//        }
-//        else if (wallRight()) {
-//          const int wallDist = 2000; //Make this bigger to move closer to the wall
-//          // Only right wall
-//          getGres();
-//          gz = (float)readGyroData() * gRes - gyroBias[2];
-//          angle += 2 * (gz) * 0.001;
-//          errorP = 20 * (angle - targetAngle) - .5 * (rightSensor - wallDist);
-//          errorD = errorP - oldErrorP;
-//        }
-//        else {
-//          getGres();
-//          gz = (float)readGyroData() * gRes - gyroBias[2];
-//          angle += 2 * (gz) * 0.001;
-//          errorP = 20 * (angle - targetAngle);
-//          errorD = errorP - oldErrorP;
-//        }
-//      }
-
-        targetAngle = curve2[i];
-        getGres();
-
-        gz = (int)readGyroData() * gRes - gyroBias[2];
-
-        if (moveType == TURN_RIGHT) {
-          angle += 1.37 * (gz) * 0.001;
-
-
-          errorP = 100 * (angle + targetAngle);
+    if (turn) {
+#if 0
+      if (i < 30) {
+        if (wallLeft() && wallRight()) {
+          angle = 0.0;
+          targetAngle = 0;
+          // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
+          errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
+          // middle of cell
+          errorD = errorP - oldErrorP;
+          // getGres();
+          // gz = (float)readGyroData() * gRes - gyroBias[2];
+          // straightAngle += 2 * (gz) * 0.001;
+        }
+        else if (wallLeft()) {
+          const int wallDist = 1900; // Make this bigger to move closer to the wall
+          // Only left wall
+          // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
+          getGres();
+          gz = (float)readGyroData() * gRes - gyroBias[2];
+          angle += 2 * (gz) * 0.001;
+          errorP = 20 * (angle - targetAngle) + .5 * (leftSensor - wallDist);
+          errorD = errorP - oldErrorP;
+        }
+        else if (wallRight()) {
+          const int wallDist = 2000; //Make this bigger to move closer to the wall
+          // Only right wall
+          getGres();
+          gz = (float)readGyroData() * gRes - gyroBias[2];
+          angle += 2 * (gz) * 0.001;
+          errorP = 20 * (angle - targetAngle) - .5 * (rightSensor - wallDist);
+          errorD = errorP - oldErrorP;
         }
         else {
-          angle += 1.375 * (gz) * 0.001;
-
-          errorP = 100 * (angle - targetAngle);
+          getGres();
+          gz = (float)readGyroData() * gRes - gyroBias[2];
+          angle += 2 * (gz) * 0.001;
+          errorP = 20 * (angle - targetAngle);
+          errorD = errorP - oldErrorP;
         }
-      
+      }
+#endif
+
+      targetAngle = curve2[i];
+      getGres();
+
+      gz = (int)readGyroData() * gRes - gyroBias[2];
+
+      if (moveType == TURN_RIGHT) {
+        angle += 1.37 * (gz) * 0.001;
+        errorP = 100 * (angle + targetAngle);
+      }
+      else {
+        angle += 1.375 * (gz) * 0.001;
+        errorP = 100 * (angle - targetAngle);
+      }
+
       errorD = errorP - oldErrorP;
 
       rightTicks = 0;
@@ -683,7 +672,6 @@ void turnCorrection() {
         gz = (float)readGyroData() * gRes - gyroBias[2];
         angle += 1 * (gz) * 0.001;
         errorP = 3 * (rightFront - leftFront - frontOffset);
-
 
         errorD = errorP - oldErrorP;
 
@@ -719,8 +707,6 @@ void turnCorrection() {
       errorP = 20 * (angle - targetAngle);
     }
 
- 
-
     totalError = straightKp * errorP + Kd * errorD;
     oldErrorP = errorP;
 
@@ -736,8 +722,8 @@ void turnCorrection() {
   if (i >= curve2Time && !straight) {
     straight = true;
 
-    leftValid = 0;
-    rightValid = 0;
+    leftValid = false;
+    rightValid = false;
 
     if (moveType == TURN_RIGHT) {
       targetAngle = -110;
@@ -752,25 +738,25 @@ void turnCorrection() {
       const int frontStop = 500;
       if ((leftFront + rightFront) / 2 >= frontStop) {
         i = 0;
-        angle = 0;
+        angle = 0.0;
         oldErrorP = 0;
         rightTicks = 0;
         leftTicks = 0;
         moveType = NO;
-        needMove = 1;
-        straight = 0;
+        needMove = true;
+        straight = false;
         turn = false;
       }
     }
     else {
       if ((rightTicks + leftTicks) / 2 >= targetTicks) {
         i = 0;
-        angle = 0;
+        angle = 0.0;
         oldErrorP = 0;
         rightTicks = 0;
         leftTicks = 0;
         moveType = NO;
-        needMove = 1;
+        needMove = true;
         straight = false;
         turn = false;
       }
@@ -779,7 +765,7 @@ void turnCorrection() {
 }
 
 void pivotTurnRight() {
-  float angle = 0.0;
+  float angle = 0.0; // TODO: THIS IS BAD. WE HAVE A GLOBAL VARIABLE NAMED 'angle', TOO. FIX THIS.
   int errorP;
   int errorD;
   int totalError;
@@ -803,7 +789,7 @@ void pivotTurnRight() {
 
   getGres();
   gz = (float)readGyroData() * gRes - gyroBias[2];
-  initialZ = gz;// May not be necessary
+  initialZ = gz; // May not be necessary
   count = millis();
   setLeftPWM(turnSpeed - 20);
   setRightPWM(-turnSpeed);
@@ -819,7 +805,7 @@ void pivotTurnRight() {
   }
   //
   //  // Needs to deccelerate for the motors to stop correctly
-  for (int i = turnSpeed; i >= 0; i--) {
+  for (int i = turnSpeed; i >= 0; --i) {
     setLeftPWM(i);
     setRightPWM(-i);
   }
@@ -827,7 +813,7 @@ void pivotTurnRight() {
 }
 
 void wallFollow() {
-  if (needMove == 1) {
+  if (needMove) {
     if (!wallRight()) {
       turnRight();
     }
@@ -841,22 +827,22 @@ void wallFollow() {
       turnAround();
     }
   }
-
 }
 
 void accelerate(int numCells) {
   int cellNumb = 1;
-  static bool cellDecided = 0;
-  if ((rightTicks+leftTicks/2) >= 320 && cellDecided == 0) {
+  static bool cellDecided = false;
+  // TODO: I think this should be (rightTicks + leftTicks) / 2.  Am I right?
+  if ((rightTicks + leftTicks/2) >= 320 && !cellDecided) {
     ++cellNumb;
-    cellDecided = 1;
+    cellDecided = true;
   }
   
-  if ((rightTicks + leftTicks)/2 <= 10) {
-    cellDecided = 0;
+  if ((rightTicks + leftTicks) / 2 <= 10) {
+    cellDecided = false;
   }
   if (cellNumb == 1) {
-    static int i=0;
+    static int i = 0;
     ++i;
     if (i >= 10) {
       leftBaseSpeed += 1;
@@ -864,13 +850,12 @@ void accelerate(int numCells) {
       i = 0;
     }
     if (leftBaseSpeed >= 400) {
-    
-    rightBaseSpeed = 400;
-    leftBaseSpeed = 400;
+      rightBaseSpeed = 400;
+      leftBaseSpeed = 400;
     }
   }
-  if (cellNumb == numCells-1 || cellNumb == numCells) {
-    static int i=0;
+  if (cellNumb == numCells - 1 || cellNumb == numCells) {
+    static int i = 0; // TODO: This is different from the 'i' above. Perhaps give it a different name?
     if (i >= 10) {
       leftBaseSpeed -= 1;
       rightBaseSpeed -= 1;
