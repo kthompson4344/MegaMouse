@@ -137,6 +137,8 @@ int Gscale = GFS_2000DPS;
 int Ascale = AFS_2G;
 float aRes, gRes;
 
+#include <stdint.h> // TODO
+
 int16_t accelCount[3];           // Stores the 16-bit signed accelerometer sensor output
 volatile float ax, ay, az;                // Stores the real accel value in g's
 int16_t gyroCount[3];            // Stores the 16-bit signed gyro sensor output
