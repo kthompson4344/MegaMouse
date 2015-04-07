@@ -22,5 +22,3 @@
 //Handle turn around with new format!!!!!!!!!!!!!!!!!!!!!!!!!111
 
 //Handle resetting ticks and case when backed up against cell (like when it starts or after turn arounds)!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-//Base Speed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1

@@ -8,8 +8,8 @@
 
 #define hasLeftWall 800
 #define hasRightWall 800
-int leftBaseSpeed = 0;
-int rightBaseSpeed = 0;
+int leftBaseSpeed = 240;
+int rightBaseSpeed = 240;
 // PID Constants
 #define straightKp 16
 #define turnKp 16
@@ -63,8 +63,8 @@ void setup() {
     float degreesTraveled;
     float initialZ;
     //    Serial.begin(9600);
-    mySerial.begin(115200);
-
+    //mySerial.begin(115200);
+    Serial.begin(115200);
     // 12 bit ADC resolution
     analogReadResolution(12);
 
@@ -96,9 +96,14 @@ void setup() {
     sensorTimer.begin(readSensors, 80);
     while (!haveSensorReading) { 
     }
+    Serial.println(leftSensor); // + " " + leftFront + " " rightSensor);
     walls_global[0] = wallLeft();
     walls_global[1] = wallFront();
     walls_global[2] = wallRight();
+    Serial.println(walls_global[0]);
+    Serial.println(walls_global[1]);
+    Serial.println(walls_global[2]);
+    haveSensorReading = false;
     movesDoneAndWallsSet = true;
     correctionTimer.priority(255);
     correctionTimer.begin(correction, 1000);
@@ -108,8 +113,11 @@ void setup() {
 #include "MackAlgo.h"
 mack::MackAlgo algo;
 void loop() {
-
-    algo.solve();
+   /// Serial.println("Left: " + walls_global[0] ? "yes":"no");
+    ///Serial.println("Front: " + walls_global[1] ? "yes":"no");
+  ////////  Serial.println("Right: " + walls_global[2] ? "yes":"no");
+   // algo.solve();
+   solve();
 
 }
 
@@ -118,7 +126,7 @@ void loop() {
 void correction() {
 
     static byte indexInBuffer = 0;
-    
+    static bool movedForward = false;
     if (!movesReady) {
         // Hoping we never get here, but maybe the algorithm is slow.
         haveSensorReading = false;
@@ -131,6 +139,7 @@ void correction() {
         if (movesBuffer[indexInBuffer] == 0) {
             // Make sure walls_global is set by the time we get here (STILL NEED TO DO IN TURN AROUND).
             movesReady = false;
+            movedForward = false;
             movesDoneAndWallsSet = true;
             indexInBuffer = 0;
             haveSensorReading = false;
@@ -140,17 +149,36 @@ void correction() {
 
     switch (movesBuffer[indexInBuffer]) {
         case 'f':
+            moveType = FORWARD;
+            
+            if(!movedForward) {
+              movedForward = true;
+              moveForward();
+            }
             forwardCorrection();
             break;
         case 'r':
+            moveType = TURN_RIGHT;
             if(firstMove) {
+                correctionTimer.end();
                 //do our special move
                 firstMove = false;
-                currentMoveDone = true; 
+                walls_global[0] = wallLeft();
+                walls_global[1] = wallFront();
+                walls_global[2] = wallRight();
+                currentMoveDone = true;
+                haveSensorReading = false;
+                correctionTimer.begin(correction, 1000);
+                return; 
             }
-        case 'l': // Fall-through"
             turnCorrection();
             break;
+        case 'l': // Fall-through"
+            moveType = TURN_LEFT;
+            turnCorrection();
+            break;
+        default:
+            moveType = NO;
         // Don't need to do anything here if we're turning around.
     }
     haveSensorReading = false;
@@ -696,7 +724,7 @@ void pivotTurnRight() {
     //    delay(200);
 }
 
-#if (0)
+#if (1)
 void solve() {
     while (!movesDoneAndWallsSet) {
     }
