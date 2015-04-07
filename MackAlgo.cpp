@@ -255,9 +255,9 @@ void MackAlgo::readWalls() {
     bool wallRight = m_mouse->wallRight();
     bool wallLeft = m_mouse->wallLeft();
 #else
-    bool wallFront = walls_global[0];
-    bool wallRight = walls_global[1];
-    bool wallLeft = walls_global[2];
+    bool wallLeft = walls_global[0];
+    bool wallFront = walls_global[1];
+    bool wallRight = walls_global[2];
     movesDoneAndWallsSet = false;
 #endif
 

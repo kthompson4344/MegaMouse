@@ -95,6 +95,10 @@ void displaySensors() {
 //   mySerial.println(rightFront);
 }
 
+void refreshSensor() {
+  haveSensorReading = false;
+}
+
 bool wallFront() {
   return (leftFront > 250 && rightFront > 250);
 }

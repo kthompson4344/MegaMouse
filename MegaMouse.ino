@@ -17,7 +17,7 @@ int rightBaseSpeed = 240;
 
 /* Variables for interface between drive code and algorithm */
 char movesBuffer[256];
-bool walls_global[3] = {false, false, false}; // Needs to be initialized.
+bool walls_global[3] = {false, false, false}; //Left, Front, Right
 volatile bool movesReady = false; // Set to true by algorithm, set to false by drive. // TODO: First move
 volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to false by algorithm.
 /* End of variables for interface */
@@ -44,6 +44,7 @@ volatile bool haveSensorReading = false;
 
 IntervalTimer correctionTimer;
 IntervalTimer sensorTimer;
+IntervalTimer refreshSensorTimer;
 SoftwareSerial mySerial = SoftwareSerial(rxPin, txPin);
 volatile float angle = 0.0;
 
@@ -62,7 +63,7 @@ void setup() {
 
     float degreesTraveled;
     float initialZ;
-    //    Serial.begin(9600);
+    //Serial.begin(9600);
     //mySerial.begin(115200);
     Serial.begin(115200);
     // 12 bit ADC resolution
@@ -70,9 +71,6 @@ void setup() {
 
     setupMotors();
     setupSensors();
-
-
-
 
     pinMode(LED, OUTPUT);
 
@@ -87,11 +85,10 @@ void setup() {
     //while (rightFront < 3300 && rightMiddleValue < 3300 && rightSensor < 3300) {
     //        readSensors();
     //        Serial.println(leftSensor);
-    //    }
+    //}
     delay(3000);
     setupGyro();
     delay(1000);
-  
     sensorTimer.priority(250);
     sensorTimer.begin(readSensors, 80);
     while (!haveSensorReading) { 
@@ -116,8 +113,8 @@ void loop() {
    /// Serial.println("Left: " + walls_global[0] ? "yes":"no");
     ///Serial.println("Front: " + walls_global[1] ? "yes":"no");
   ////////  Serial.println("Right: " + walls_global[2] ? "yes":"no");
-   // algo.solve();
-   solve();
+   algo.solve();
+//   solve();
 
 }
 
@@ -177,8 +174,28 @@ void correction() {
             moveType = TURN_LEFT;
             turnCorrection();
             break;
+        case 'a':
+            correctionTimer.end();
+            leftTicks = 0;
+            rightTicks = 0;
+            turnAround();
+            //haveSensorReading = false;
+           // digitalWriteFast(LED, HIGH);
+           // while(!haveSensorReading) {}
+            //digitalWriteFast(LED, LOW);
+           // walls_global[0] = wallLeft();
+            //walls_global[1] = wallFront();
+           // walls_global[2] = wallRight();
+            currentMoveDone = true;
+            haveSensorReading = false;
+            correctionTimer.priority(255);
+            correctionTimer.begin(correction, 1000);
+            return; 
         default:
             moveType = NO;
+            //setLeftPWM(0);
+            //setRightPWM(0);
+            
         // Don't need to do anything here if we're turning around.
     }
     haveSensorReading = false;
@@ -232,10 +249,39 @@ void turnAround() {
     leftBaseSpeed = 240;
     rightBaseSpeed = 240;
     moveType = NO;
-
-    while (leftFront < frontLeftStop || rightFront < frontRightStop) {
-        errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
-        // middle of cell
+    
+    if (wallFront()) {
+    while (rightFront <= frontRightStop || leftFront <= frontLeftStop) {
+        if (wallRight() && wallLeft()) {
+            errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
+            // middle of cell
+        }
+        else if (wallRight()){//TODO - UNTESTED
+          const int wallDist = 1900; //Make this bigger to move closer to the wall
+          // Only right wall
+          getGres();
+          gz = (float)readGyroData() * gRes - gyroBias[2];
+          angle += 2 * (gz) * 0.001;
+          errorP = 20 * (angle) - .5 * (rightSensor - wallDist);
+          errorD = errorP;
+        }
+        else if (wallLeft()){//TODO - UNTESTED
+          const int wallDist = 1900; // Make this bigger to move closer to the wall
+          // Only left wall
+          // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
+          getGres();
+          gz = (float)readGyroData() * gRes - gyroBias[2];
+          angle += 2 * (gz) * 0.001;
+          errorP = 20 * (angle) + .5 * (leftSensor - wallDist);
+          errorD = errorP;
+        }
+        else{//TODO - UNTESTED
+          getGres();
+          gz = (float)readGyroData() * gRes - gyroBias[2];
+          angle += 2 * (gz) * 0.001;
+          errorP = 20 * (angle);
+          errorD = errorP;
+        }
         errorD = errorP;
         totalError = straightKp * errorP + Kd * errorD;
 
@@ -246,22 +292,67 @@ void turnAround() {
         // Update Motor PWM values
         setLeftPWM(currentLeftPWM);
         setRightPWM(currentRightPWM);
-#if 0
-        if (leftFront <= frontLeftStop) {
-            setLeftPWM(leftBaseSpeed);
+        
+        //TODO (this is a hack and shouldn't be here, but it makes it work)
+        haveSensorReading = false;
+        while (!haveSensorReading) {
+          readSensors();
+          delayMicroseconds(80);
         }
-        else {
-            setLeftPWM(0);
-            leftStop = 1;
+    }
+    }
+    //Turn Around with no wall in front
+    else{
+      const int tickValue = 75;
+      while ((rightTicks+leftTicks)/2 < tickValue) {
+        if (wallRight() && wallLeft()) {
+            errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
+            // middle of cell
         }
-        if (rightFront <= frontRightStop) {
-            setRightPWM(rightBaseSpeed);
+        else if (wallRight()){//TODO - UNTESTED
+          const int wallDist = 1900; //Make this bigger to move closer to the wall
+          // Only right wall
+          getGres();
+          gz = (float)readGyroData() * gRes - gyroBias[2];
+          angle += 2 * (gz) * 0.001;
+          errorP = 20 * (angle) - .5 * (rightSensor - wallDist);
+          errorD = errorP;
         }
-        else {
-            setRightPWM(0);
-            rightStop = 1;
+        else if (wallLeft()){//TODO - UNTESTED
+          const int wallDist = 1900; // Make this bigger to move closer to the wall
+          // Only left wall
+          // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
+          getGres();
+          gz = (float)readGyroData() * gRes - gyroBias[2];
+          angle += 2 * (gz) * 0.001;
+          errorP = 20 * (angle) + .5 * (leftSensor - wallDist);
+          errorD = errorP;
         }
-#endif
+        else{//TODO - UNTESTED
+          getGres();
+          gz = (float)readGyroData() * gRes - gyroBias[2];
+          angle += 2 * (gz) * 0.001;
+          errorP = 20 * (angle);
+          errorD = errorP;
+        }
+        errorD = errorP;
+        totalError = straightKp * errorP + Kd * errorD;
+
+        // Calculate PWM based on Error
+        currentLeftPWM = leftBaseSpeed + totalError / 124;
+        currentRightPWM = rightBaseSpeed - totalError / 124;
+
+        // Update Motor PWM values
+        setLeftPWM(currentLeftPWM);
+        setRightPWM(currentRightPWM);
+        
+        //TODO (this is a hack and shouldn't be here, but it makes it work)
+        haveSensorReading = false;
+        while (!haveSensorReading) {
+          readSensors();
+          delayMicroseconds(80);
+        }
+    }
     }
     setRightPWM(0);
     setLeftPWM(0);
@@ -363,7 +454,6 @@ void forwardCorrection() {
         angle += 2 * (gz) * 0.001;
         errorP = 20 * (angle) + .5 * (leftSensor - wallDist);
         errorD = errorP - oldErrorP;
-
     }
     else if (rightValid) {
         const int wallDist = 1900; //Make this bigger to move closer to the wall
@@ -724,7 +814,7 @@ void pivotTurnRight() {
     //    delay(200);
 }
 
-#if (1)
+#if (0)
 void solve() {
     while (!movesDoneAndWallsSet) {
     }
@@ -740,17 +830,22 @@ void solve() {
     // Then put a null character at the end of moveBuffer.
     if (!walls[2]) {
         movesBuffer[0] = 'r';
+        movesBuffer[1] = 0;
     }
     else if (!walls[1]) {
         movesBuffer[0] = 'f';
+        movesBuffer[1] = 0;
     }
     else if (!walls[0]) {
         movesBuffer[0] = 'l';
+        movesBuffer[1] = 0;
     }
     else {
         movesBuffer[0] = 'a';
+        movesBuffer[1] = 'f';
+        movesBuffer[2] = 0;
     }
-    movesBuffer[1] = 0;
+    
     movesReady = true;
 }
 #endif

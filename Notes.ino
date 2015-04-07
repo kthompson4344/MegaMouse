@@ -19,6 +19,8 @@
 
 //Do the special case blocking call in correction
 
-//Handle turn around with new format!!!!!!!!!!!!!!!!!!!!!!!!!111
-
 //Handle resetting ticks and case when backed up against cell (like when it starts or after turn arounds)!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+//Check all TODOs
+
+//Test turnAround without walls on both sides
