@@ -13,17 +13,15 @@
 
 //pick up detection
 
-//forward correction when exiting a turn!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-//use deg/s instead of degrees in curve turn table??
-
 //Check one wall correction(turn correction off at posts)
 
 //Check forwardCorrection values
 
-//Better correction in turnAround
+//first cell case when wall is in front of you (coordinate with mack)
 
-//Read next cell walls for forwardCorrection after second pivot turn
+//replace needMove = true with wallsReady = true,fill in global array of 3 wall values before that
 
-//End strait after turn using front walls when available, instead of encoder ticks
+//Do the special case blocking call in correction
+
+//Handle turn around with new format
 

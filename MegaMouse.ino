@@ -15,6 +15,16 @@ int rightBaseSpeed = 0;
 #define turnKp 16
 #define Kd 10
 
+/* Variables for interface between drive code and algorithm */
+char movesBuffer[256];
+bool walls_global[3] = {false, false, false}; // Needs to be initialized.
+volatile bool movesReady = false; // Set to true by algorithm, set to false by drive. // TODO: First move
+volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to false by algorithm.
+/* End of variables for interface */
+
+bool currentMoveDone = false;
+bool firstMove = true;
+
 const int rxPin = 0;
 const int txPin = 16;
 
@@ -30,8 +40,7 @@ volatile bool firstCell = true;
 volatile bool rightValid = true;
 volatile bool leftValid = true;
 bool go = false;
-volatile bool needMove = true;
-volatile bool haveSensorReading = true;
+volatile bool haveSensorReading = false;
 
 IntervalTimer correctionTimer;
 IntervalTimer sensorTimer;
@@ -62,10 +71,8 @@ void setup() {
   setupMotors();
   setupSensors();
 
-  correctionTimer.begin(correction, 1000);
-  correctionTimer.priority(255);
-  sensorTimer.begin(readSensors, 80);
-  sensorTimer.priority(250);
+
+
 
   pinMode(LED, OUTPUT);
 
@@ -116,30 +123,30 @@ void setup() {
   //while(1);
   //pivotTurnRight();
   //go = 1;
-//  leftBaseSpeed = 240;
-//  rightBaseSpeed = 240;
-//      moveForward();
-//      while (needMove == 0) {
-//        accelerate(5);
-//      }
-//      moveForward();
-//      while (needMove == 0) {
-//        accelerate(5);
-//      }
-//      moveForward();
-//      while (needMove == 0) {
-//        accelerate(5);
-//      }
-//      moveForward();
-//      while (needMove == 0) {
-//        accelerate(5);
-//      }
-//      moveForward();
-//      while (needMove == 0) {
-//        accelerate(5);
-//      }
-//      setLeftPWM(0);
-//      setRightPWM(0);
+  //  leftBaseSpeed = 240;
+  //  rightBaseSpeed = 240;
+  //      moveForward();
+  //      while (needMove == 0) {
+  //        accelerate(5);
+  //      }
+  //      moveForward();
+  //      while (needMove == 0) {
+  //        accelerate(5);
+  //      }
+  //      moveForward();
+  //      while (needMove == 0) {
+  //        accelerate(5);
+  //      }
+  //      moveForward();
+  //      while (needMove == 0) {
+  //        accelerate(5);
+  //      }
+  //      moveForward();
+  //      while (needMove == 0) {
+  //        accelerate(5);
+  //      }
+  //      setLeftPWM(0);
+  //      setRightPWM(0);
 
   //    moveForward();
   //    while (needMove == 0);
@@ -177,7 +184,6 @@ void setup() {
   //    turnRight();
   //    while (needMove == 0);
   //    while(1) {
-  go = true;
   //    sensorTimer.end();
   //    correctionTimer.end();
   //      setLeftPWM(0);
@@ -208,14 +214,14 @@ void setup() {
   //    while (needMove == 0);
   //    moveForward();
   //    while (needMove == 0);
-//      moveForward();
-//      while (needMove == 0);
-//  //////    digitalWrite(LED2,LOW);
-//      turnt();
-//      while (needMove == 0);
-//  //    while(1) {
-//        setLeftPWM(0);
-//        setRightPWM(0);
+  //      moveForward();
+  //      while (needMove == 0);
+  //  //////    digitalWrite(LED2,LOW);
+  //      turnt();
+  //      while (needMove == 0);
+  //  //    while(1) {
+  //        setLeftPWM(0);
+  //        setRightPWM(0);
   //    Serial.print((rightTicks+leftTicks)/2);
   //    Serial.print(" ");
   //    Serial.print(leftSensor);
@@ -230,13 +236,24 @@ void setup() {
   //    turnRight();
   //    while (needMove == 0);
   //  }
+  sensorTimer.priority(250);
+  sensorTimer.begin(readSensors, 80);
+  while (!haveSensorReading) { 
+  }
+  walls_global[0] = wallLeft();
+  walls_global[1] = wallFront();
+  walls_global[2] = wallRight();
+  movesDoneAndWallsSet = true;
+  correctionTimer.priority(255);
+  correctionTimer.begin(correction, 1000);
+  
 }
 
 void loop() {
 
 
   //Serial.println(rightTicks);
-  wallFollow();
+  solve();
 
   //  //displaySensors();
 
@@ -257,34 +274,50 @@ void loop() {
 // Mack calls certain number of move forwards; we add however many ticks for every move forward.
 
 void correction() {
-  //  displaySensors();
-  //  readSensors();
-  switch (moveType) {
-    case FORWARD:
+
+  static byte indexInBuffer = 0;
+  
+  if (!movesReady) {
+    // Hoping we never get here, but maybe the algorithm is slow.
+    haveSensorReading = false;
+    return;
+  }
+  
+  if (currentMoveDone) {
+    indexInBuffer += 1;
+    currentMoveDone = false;
+    if (movesBuffer[indexInBuffer] == 0) {
+      // Make sure walls_global is set by the time we get here (STILL NEED TO DO IN TURN AROUND).
+      movesReady = false;
+      movesDoneAndWallsSet = true;
+      indexInBuffer = 0;
+      haveSensorReading = false;
+      return;
+    }
+  }
+
+  switch (movesBuffer[indexInBuffer]) {
+    case 'f':
       forwardCorrection();
       break;
-    case NO:
-      break;
-    case TURN_RIGHT:
+    case 'r':
+      if(firstMove) {
+        //do our special move
+        firstMove = false;
+        currentMoveDone = true; 
+      }
+    case 'l': // Fall-through"
       turnCorrection();
       break;
-    case TURN_LEFT:
-      turnCorrection();
-      break;
+    // Don't need to do anything here if we're turning around.
   }
-//    if(go == 1) {
-//      mySerial.print((leftTicks+rightTicks)/2);
-//      mySerial.print(" ");
-//      mySerial.println(rightSensor);
-//    }
-  //  }
   haveSensorReading = false;
 }
 
 void moveForward() {
-  //  digitalWriteFast(LED2, HIGH);
+  // digitalWriteFast(LED2, HIGH);
 
-  //          digitalWriteFast(LED1, HIGH);
+  // digitalWriteFast(LED1, HIGH);
   if (firstCell) {
     rightTicks = 70;
     leftTicks = 70;
@@ -300,21 +333,21 @@ void moveForward() {
   rightValid = wallRight();
   leftValid = wallLeft();
   moveType = FORWARD;
-  needMove = false;
+  //  needMove = false;
 }
 
 void turnRight() {
   leftBaseSpeed = 240;
   rightBaseSpeed = 240;
   moveType = TURN_RIGHT;
-  needMove = false;
+  //  needMove = false;
 }
 
 void turnLeft() {
   leftBaseSpeed = 240;
   rightBaseSpeed = 240;
   moveType = TURN_LEFT;
-  needMove = false;
+  //  needMove = false;
 }
 
 void turnAround() {
@@ -379,7 +412,7 @@ void turnAround() {
   }
   delay(200);
   firstCell = true;
-  needMove = true;
+  //  needMove = true;
 }
 
 void forwardCorrection() {
@@ -410,13 +443,11 @@ void forwardCorrection() {
   //  int leftTicksRemaining;
   int errorP;
   int errorD;
-  int oldErrorP;
+  int oldErrorP = 0;
   int totalError;
   //  static float angle;
   static int lastTicksL;
   static int lastTicksR;
-  static int targetAngle = 0; // TODO: This variable never changes!  Also, all we ever do is subtract it from something
-                              // else, so do we really need it at all?
   static float straightAngle = 0.0;
   static bool endCell = false;
   static bool currentWallLeft = true;
@@ -444,7 +475,7 @@ void forwardCorrection() {
 
   if (leftValid && rightValid) {
     angle = 0.0;
-    targetAngle = 0;
+
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
     errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
     // middle of cell
@@ -460,7 +491,7 @@ void forwardCorrection() {
     getGres();
     gz = (float)readGyroData() * gRes - gyroBias[2];
     angle += 2 * (gz) * 0.001;
-    errorP = 20 * (angle - targetAngle) + .5 * (leftSensor - wallDist);
+    errorP = 20 * (angle) + .5 * (leftSensor - wallDist);
     errorD = errorP - oldErrorP;
 
   }
@@ -470,7 +501,7 @@ void forwardCorrection() {
     getGres();
     gz = (float)readGyroData() * gRes - gyroBias[2];
     angle += 2 * (gz) * 0.001;
-    errorP = 20 * (angle - targetAngle) - .5 * (rightSensor - wallDist);
+    errorP = 20 * (angle) - .5 * (rightSensor - wallDist);
     errorD = errorP - oldErrorP;
   }
   else {
@@ -488,7 +519,7 @@ void forwardCorrection() {
     getGres();
     gz = (float)readGyroData() * gRes - gyroBias[2];
     angle += 2 * (gz) * 0.001;
-    errorP = 20 * (angle - targetAngle);
+    errorP = 20 * (angle);
     errorD = errorP - oldErrorP;
   }
 
@@ -560,7 +591,11 @@ void forwardCorrection() {
     currentWallRight = nextRightValid;
     oldErrorP = 0;
     ticksDecided = false;
-    needMove = true;
+    walls_global[0] = wallLeft();
+    walls_global[1] = wallFront();
+    walls_global[2] = wallRight();
+    currentMoveDone = true;
+    //    needMove = true;
     nextCellDecided = false;
     moveType = NO;
     endCell = false;
@@ -581,8 +616,8 @@ void forwardCorrection() {
 
 void turnCorrection() {
   int errorP;
-  int errorD;
-  int oldErrorP;
+  int errorD = 0;
+  int oldErrorP = 0;
   int totalError;
   static float targetAngle;
   static int i = 0;
@@ -743,7 +778,11 @@ void turnCorrection() {
         rightTicks = 0;
         leftTicks = 0;
         moveType = NO;
-        needMove = true;
+        walls_global[0] = wallLeft();
+        walls_global[1] = wallFront();
+        walls_global[2] = wallRight();
+        currentMoveDone = true;
+        //        needMove = true;
         straight = false;
         turn = false;
       }
@@ -756,7 +795,11 @@ void turnCorrection() {
         rightTicks = 0;
         leftTicks = 0;
         moveType = NO;
-        needMove = true;
+        walls_global[0] = wallLeft();
+        walls_global[1] = wallFront();
+        walls_global[2] = wallRight();
+        currentMoveDone = true;
+        //        needMove = true;
         straight = false;
         turn = false;
       }
@@ -765,7 +808,6 @@ void turnCorrection() {
 }
 
 void pivotTurnRight() {
-  float angle = 0.0; // TODO: THIS IS BAD. WE HAVE A GLOBAL VARIABLE NAMED 'angle', TOO. FIX THIS.
   int errorP;
   int errorD;
   int totalError;
@@ -812,32 +854,43 @@ void pivotTurnRight() {
   //  delay(200);
 }
 
-void wallFollow() {
-  if (needMove) {
-    if (!wallRight()) {
-      turnRight();
-    }
-    else if (!wallFront()) {
-      moveForward();
-    }
-    else if (!wallLeft()) {
-      turnLeft();
-    }
-    else {
-      turnAround();
-    }
+void solve() {
+  while (!movesDoneAndWallsSet) {
   }
+  bool walls[3];
+  memcpy(walls, walls_global, 3 * sizeof(bool)); // walls = walls_global
+  movesDoneAndWallsSet = false;
+  /* TODO: Figure out next moves and put them into moveBuffer. */
+
+  // 'f' - forward
+  // 'l' - left
+  // 'r' - right
+  // 'a' - turn around
+  // Then put a null character at the end of moveBuffer.
+  if (!walls[2]) {
+    movesBuffer[0] = 'r';
+  }
+  else if (!walls[1]) {
+    movesBuffer[0] = 'f';
+  }
+  else if (!walls[0]) {
+    movesBuffer[0] = 'l';
+  }
+  else {
+    movesBuffer[0] = 'a';
+  }
+  movesBuffer[1] = 0;
+  movesReady = true;
 }
 
 void accelerate(int numCells) {
   int cellNumb = 1;
   static bool cellDecided = false;
-  // TODO: I think this should be (rightTicks + leftTicks) / 2.  Am I right?
-  if ((rightTicks + leftTicks/2) >= 320 && !cellDecided) {
+  if ((rightTicks + leftTicks) / 2 >= 320 && !cellDecided) {
     ++cellNumb;
     cellDecided = true;
   }
-  
+
   if ((rightTicks + leftTicks) / 2 <= 10) {
     cellDecided = false;
   }
@@ -855,7 +908,7 @@ void accelerate(int numCells) {
     }
   }
   if (cellNumb == numCells - 1 || cellNumb == numCells) {
-    static int i = 0; // TODO: This is different from the 'i' above. Perhaps give it a different name?
+    static int i = 0;
     if (i >= 10) {
       leftBaseSpeed -= 1;
       rightBaseSpeed -= 1;

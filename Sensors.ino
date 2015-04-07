@@ -18,7 +18,7 @@ void readSensors() {
   static int leftMiddleAmbient = 0;
   static int rightMiddleAmbient = 0;
   static int state = 0;
-  if (haveSensorReading == 0) {
+  if (!haveSensorReading) {
     switch (state) {
       case 0: // Read ambient values.
         leftFrontAmbient = analogRead(RX[lf]);
@@ -93,12 +93,8 @@ void displaySensors() {
 
 //   mySerial.print(" ");
 //   mySerial.println(rightFront);
- 
-
-
 }
 
- 
 bool wallFront() {
   return (leftFront > 250 && rightFront > 250);
 }
