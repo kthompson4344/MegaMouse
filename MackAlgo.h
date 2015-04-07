@@ -9,7 +9,7 @@
 
 namespace mack {
 
-static const int MAZE_WIDTH = 6;   // XXX
+static const int MAZE_WIDTH = 6; // XXX
 static const int MAZE_HEIGHT = 10; // XXX
 enum {NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3};
 
@@ -51,12 +51,11 @@ private:
 #if (SIMULATOR)
     void turnLeft();
     void turnRight();
-    void turnAround();
 #endif
+    void turnAround();
     void moveForward();
     void leftAndForward();
     void rightAndForward();
-    void aroundAndForward();
 
     Cell* getFrontCell();
     Cell* getLeftCell();

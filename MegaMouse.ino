@@ -114,7 +114,7 @@ void loop() {
     ///Serial.println("Front: " + walls_global[1] ? "yes":"no");
   ////////  Serial.println("Right: " + walls_global[2] ? "yes":"no");
    algo.solve();
-//   solve();
+   //solve();
 
 }
 
@@ -131,6 +131,9 @@ void correction() {
     }
     
     if (currentMoveDone) {
+        if (firstMove) {
+            firstMove = false;
+        }
         indexInBuffer += 1;
         currentMoveDone = false;
         if (movesBuffer[indexInBuffer] == 0) {
@@ -156,10 +159,9 @@ void correction() {
             break;
         case 'r':
             moveType = TURN_RIGHT;
-            if(firstMove) {
+            if (firstMove) {
                 correctionTimer.end();
                 //do our special move
-                firstMove = false;
                 walls_global[0] = wallLeft();
                 walls_global[1] = wallFront();
                 walls_global[2] = wallRight();
@@ -198,6 +200,7 @@ void correction() {
             
         // Don't need to do anything here if we're turning around.
     }
+
     haveSensorReading = false;
 }
 
@@ -814,7 +817,6 @@ void pivotTurnRight() {
     //    delay(200);
 }
 
-#if (0)
 void solve() {
     while (!movesDoneAndWallsSet) {
     }
@@ -848,7 +850,6 @@ void solve() {
     
     movesReady = true;
 }
-#endif
 
 void accelerate(int numCells) {
     int cellNumb = 1;

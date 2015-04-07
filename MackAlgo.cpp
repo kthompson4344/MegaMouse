@@ -17,9 +17,9 @@
 
 #if (!SIMULATOR)
 extern char movesBuffer[256];
-extern bool walls_global[3]; // Needs to be initialized.
-extern volatile bool movesReady; // Set to true by algorithm, set to false by drive. // TODO: First move
-extern volatile bool movesDoneAndWallsSet; // Set to true by drive, set to false by algorithm.
+extern bool walls_global[3];
+extern volatile bool movesReady;
+extern volatile bool movesDoneAndWallsSet;
 #endif
 
 namespace mack {
@@ -304,12 +304,18 @@ void MackAlgo::turnRight() {
     m_d = (m_d + 1) % 4;
     m_mouse->turnRight();
 }
+#endif
 
 void MackAlgo::turnAround() {
+#if (SIMULATOR)
     m_d = (m_d + 2) % 4;
     m_mouse->turnAround();
-}
+#else
+    movesBuffer[0] = 'a';
+    movesBuffer[1] = '\0';
+    movesReady = true;
 #endif
+}
 
 void MackAlgo::moveForward() {
     switch (m_d){
@@ -352,17 +358,6 @@ void MackAlgo::rightAndForward() {
     moveForward();
 #else
     movesBuffer[0] = 'r';
-    movesBuffer[1] = '\0';
-    movesReady = true;
-#endif
-}
-
-void MackAlgo::aroundAndForward() {
-#if (SIMULATOR)
-    turnAround();
-    moveForward();
-#else
-    movesBuffer[0] = 'a';
     movesBuffer[1] = '\0';
     movesReady = true;
 #endif
@@ -506,7 +501,8 @@ void MackAlgo::moveOneCell(Cell* target) {
             rightAndForward();
         }
         else if (moveDirection == (m_d + 2) % 4) {
-            aroundAndForward();
+            turnAround();
+            moveForward();
         }
         else if (moveDirection == (m_d + 3) % 4) {
             leftAndForward();
