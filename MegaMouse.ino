@@ -90,152 +90,8 @@ void setup() {
     //    }
     delay(3000);
     setupGyro();
-    //    delay(2000);
-    //    getGres();
-    //    initialZ = (float)readGyroData()*gRes - gyroBias[2];
-    //    count = millis();
     delay(1000);
-    //    while(1) {
-    //            setLeftPWM(30);
-    //            setRightPWM(30);
-    //        }
-    //turnRight();
-    //    turnRight();
-    //turnLeft();
-
-    //moveType = NO;
-    //    while (1) {
-    //        digitalWriteFast(LED2,HIGH);
-    //    moveForward();
-    //    while (needMove == 0);
-    //    turnLeft();
-    //    turnRight();
-    //    while (needMove == 0);
-    //    turnRight();
-    //    while (needMove == 0);
-    //        digitalWriteFast(LED1,LOW);
-    //        digitalWriteFast(LED2,LOW);
-    //        turnAround();
-    //        while (needMove == 0);
-    //    setLeftPWM(0);
-    //    setRightPWM(0);
-    //    pivotTurnRight();
-    //while(1);
-    //pivotTurnRight();
-    //go = 1;
-    //    leftBaseSpeed = 240;
-    //    rightBaseSpeed = 240;
-    //            moveForward();
-    //            while (needMove == 0) {
-    //                accelerate(5);
-    //            }
-    //            moveForward();
-    //            while (needMove == 0) {
-    //                accelerate(5);
-    //            }
-    //            moveForward();
-    //            while (needMove == 0) {
-    //                accelerate(5);
-    //            }
-    //            moveForward();
-    //            while (needMove == 0) {
-    //                accelerate(5);
-    //            }
-    //            moveForward();
-    //            while (needMove == 0) {
-    //                accelerate(5);
-    //            }
-    //            setLeftPWM(0);
-    //            setRightPWM(0);
-
-    //        moveForward();
-    //        while (needMove == 0);
-    //        moveForward();
-    //        while (needMove == 0);
-    //    ////        digitalWrite(LED2,LOW);
-    //            turnRight();
-    //    ////        turnLeft();
-    //            while (needMove == 0);
-    //    //        turnRight();
-    //            turnLeft();
-    //            while (needMove == 0);
-    //            turnRight();
-    //            while (needMove == 0);
-    //            moveForward();
-    //            while (needMove == 0);
-    //        moveForward();
-    //        while (needMove == 0);
-    //        moveForward();
-    //        while (needMove == 0);
-    //        digitalWrite(LED2,LOW);
-    //        turnRight();
-    //        while (needMove == 0);
-    //        turnRight();
-    //        while (needMove == 0);
-    //        moveForward();
-    //        while (needMove == 0);
-    //        moveForward();
-    //        while (needMove == 0);
-    //        moveForward();
-    //        while (needMove == 0);
-    //        moveForward();
-    //        while (needMove == 0);
-    //        digitalWrite(LED2,LOW);
-    //        turnRight();
-    //        while (needMove == 0);
-    //        while(1) {
-    //        sensorTimer.end();
-    //        correctionTimer.end();
-    //            setLeftPWM(0);
-    //            setRightPWM(0);
-    //            for(int i = 0; i < readings; i++) {
-    //                mySerial.print(ticksL[i]);
-    //                mySerial.print(",");
-    //                mySerial.print(ticksR[i]);
-    //                mySerial.print(",");
-    //                mySerial.print(rightM[i]);
-    //                mySerial.print(",");
-    //                mySerial.print(leftM[i]);
-    //                mySerial.print(",");
-    //                mySerial.print(rightS[i]);
-    //                mySerial.print(",");
-    //                mySerial.println(leftS[i]);
-    //            }
-    //        }
-    //        moveForward();
-    //        while (needMove == 0);
-    //        moveForward();
-    //        while (needMove == 0);
-    //        turnRight();
-    //        while (needMove == 0);
-    //        moveForward();
-    //        while (needMove == 0);
-    //        moveForward();
-    //        while (needMove == 0);
-    //        moveForward();
-    //        while (needMove == 0);
-    //            moveForward();
-    //            while (needMove == 0);
-    //    //////        digitalWrite(LED2,LOW);
-    //            turnt();
-    //            while (needMove == 0);
-    //    //        while(1) {
-    //                setLeftPWM(0);
-    //                setRightPWM(0);
-    //        Serial.print((rightTicks+leftTicks)/2);
-    //        Serial.print(" ");
-    //        Serial.print(leftSensor);
-    //        Serial.print(" ");
-    //        Serial.println(rightSensor);
-    //        delay(100);
-    //        }
-    //        moveForward();
-    //        while (needMove == 0);
-    //        moveForward();
-    //        while (needMove == 0);
-    //        turnRight();
-    //        while (needMove == 0);
-    //    }
+  
     sensorTimer.priority(250);
     sensorTimer.begin(readSensors, 80);
     while (!haveSensorReading) { 
@@ -253,24 +109,8 @@ void setup() {
 mack::MackAlgo algo;
 void loop() {
 
-
-    //Serial.println(rightTicks);
     algo.solve();
 
-    //    //displaySensors();
-
-    //    setLeftPWM(0);
-    //    setRightPWM(0);
-    //    Serial.print("Wall Left = ");
-    //    Serial.print(wallLeft());
-    //    Serial.print(" ");
-    //    Serial.print("Wall Right = ");
-    //    Serial.print(wallRight());
-    //    Serial.print(" ");
-    //    Serial.print("Wall Front = ");
-    //    Serial.println(wallFront());
-    //        displaySensors();
-    //                delay(1);
 }
 
 // Mack calls certain number of move forwards; we add however many ticks for every move forward.
