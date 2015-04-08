@@ -9,7 +9,7 @@
 #define hasLeftWall 800
 #define hasRightWall 800
 int leftBaseSpeed = 240;
-int rightBaseSpeed = 240;
+int rightBaseSpeed = 249;
 // PID Constants
 #define straightKp 16
 #define turnKp 16
@@ -95,19 +95,14 @@ void setup() {
     sensorTimer.begin(readSensors, 80);
     while (!haveSensorReading) { 
     }
-    Serial.println(leftSensor); // + " " + leftFront + " " rightSensor);
     walls_global[0] = wallLeft();
     walls_global[1] = wallFront();
     walls_global[2] = wallRight();
-    Serial.println(walls_global[0]);
-    Serial.println(walls_global[1]);
-    Serial.println(walls_global[2]);
     haveSensorReading = false;
     movesDoneAndWallsSet = true;
     mySerial.println("Garbage");
     correctionTimer.priority(255);
     correctionTimer.begin(correction, 1000);
-    
 }
 
 #include "MackAlgo.h"
@@ -116,11 +111,30 @@ void loop() {
    /// Serial.println("Left: " + walls_global[0] ? "yes":"no");
     ///Serial.println("Front: " + walls_global[1] ? "yes":"no");
   ////////  Serial.println("Right: " + walls_global[2] ? "yes":"no");
+  //wheelCalib();
    algo.solve();
 //   bluetoothPrint();
-   //solve();
+//   solve();
 
 }
+/*
+void wheelCalib(){
+  Serial.begin(9600);
+  correctionTimer.end();
+  sensorTimer.end();
+  refreshSensorTimer.end();
+  setLeftPWM(240);
+  setRightPWM(249);
+  while(1){
+    delay(1000);
+    Serial.print(leftTicks);
+    Serial.print(" ");
+    Serial.println(rightTicks);
+    leftTicks = 0;
+    rightTicks = 0;
+  }
+}
+*/
 
 // Mack calls certain number of move forwards; we add however many ticks for every move forward.
 
@@ -137,7 +151,7 @@ void correction() {
     if (currentMoveDone) {
         
         
-        bluetoothPrint();
+//        bluetoothPrint();
         if (firstMove) {
             firstMove = false;
         }
@@ -228,7 +242,7 @@ void moveForward() {
         leftTicks = 0;
     }
     leftBaseSpeed = 240;//240
-    rightBaseSpeed = 240;//240
+    rightBaseSpeed = 249;//240
 
     rightValid = wallRight();
     leftValid = wallLeft();
@@ -260,7 +274,7 @@ void turnAround() {
     int errorD;
     int totalError;
     leftBaseSpeed = 240;
-    rightBaseSpeed = 240;
+    rightBaseSpeed = 249;
     moveType = NO;
     
     if (wallFront()) {
@@ -408,7 +422,7 @@ void forwardCorrection() {
     // encoder tick value when we check walls a cell ahead
     const int readingTicks = 173; // check this value (163)
     // encoder tick value when we switch to next cell's values
-    const int newSideTicks = 200; // check this value (200)
+    const int newSideTicks = 225; // check this value (200)
 
     static bool nextRightValid;
     static bool nextLeftValid;
@@ -461,13 +475,13 @@ void forwardCorrection() {
         //        straightAngle += 2 * (gz) * 0.001;
     }
     else if (leftValid) {
-        const int wallDist = 1900; // Make this bigger to move closer to the wall
+        const int wallDist = 2000; // Make this bigger to move closer to the wall
         // Only left wall
         // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
         getGres();
         gz = (float)readGyroData() * gRes - gyroBias[2];
         angle += 2 * (gz) * 0.001;
-        errorP = 20 * (angle) + .5 * (leftSensor - wallDist);
+        errorP = 20 * (angle-5) + .5 * (leftSensor - wallDist);
         errorD = errorP - oldErrorP;
     }
     else if (rightValid) {
@@ -599,11 +613,11 @@ void turnCorrection() {
     static bool turn = false;
     static bool straight = 0;
     const int targetTicks = 140;
-    const int frontOffset = 50; // difference between left and right front sensors when lined up with the wall
+    const int frontOffset = 100; // difference between left and right front sensors when lined up with the wall
 
     if (!straight) {
         if (turn) {
-#if 0
+#if 0//TODO ??????
             if (i < 30) {
                 if (wallLeft() && wallRight()) {
                     angle = 0.0;
@@ -644,20 +658,21 @@ void turnCorrection() {
                 }
             }
 #endif
-
-            targetAngle = curve2[i];
-            getGres();
-
-            gz = (int)readGyroData() * gRes - gyroBias[2];
-
-            if (moveType == TURN_RIGHT) {
-                angle += 1.37 * (gz) * 0.001;
-                errorP = 100 * (angle + targetAngle);
-            }
-            else {
-                angle += 1.375 * (gz) * 0.001;
-                errorP = 100 * (angle - targetAngle);
-            }
+           
+              targetAngle = curve2[i];
+              getGres();
+  
+              gz = (int)readGyroData() * gRes - gyroBias[2];
+  
+              if (moveType == TURN_RIGHT) {
+                  angle += 1.37 * (gz) * 0.001;
+                  errorP = 100 * (angle + targetAngle);
+              }
+              else {
+                  angle += 1.375 * (gz) * 0.001;
+                  errorP = 100 * (angle - targetAngle);
+              }
+            
 
             errorD = errorP - oldErrorP;
 
@@ -675,12 +690,44 @@ void turnCorrection() {
             setRightPWM(currentRightPWM);
             ++i;
         }
+        //end if (turn)
         else {
             const int frontStop = 700;
             if (wallFront()) {
-                getGres();
-                gz = (float)readGyroData() * gRes - gyroBias[2];
-                angle += 1 * (gz) * 0.001;
+                if (wallLeft()) {
+                    const int wallDist = 1900; // Make this bigger to move closer to the wall
+                    // Only left wall
+                    // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
+                    getGres();
+                    gz = (float)readGyroData() * gRes - gyroBias[2];
+                    angle += 2 * (gz) * 0.001;
+//                    errorP = 20 * (angle - targetAngle) + .5 * (leftSensor - wallDist);
+                      errorP = .5 * (leftSensor - wallDist) + 3 * (rightFront - leftFront - frontOffset);
+//                    errorP = 3 * (rightFront - leftFront - frontOffset);
+                    errorD = errorP - oldErrorP;
+                }
+                else if (wallRight()) {
+                    const int wallDist = 2000; //Make this bigger to move closer to the wall
+                    // Only right wall
+                    getGres();
+                    gz = (float)readGyroData() * gRes - gyroBias[2];
+                    angle += 2 * (gz) * 0.001;
+//                    errorP = 20 * (angle - targetAngle) - .5 * (rightSensor - wallDist);
+//                    errorP = 3 * (rightFront - leftFront - frontOffset);
+                    errorP = -.5 * (rightSensor - wallDist) + 3 * (rightFront - leftFront - frontOffset);
+                    errorD = errorP - oldErrorP;
+                }
+                else {
+                    getGres();
+                    gz = (float)readGyroData() * gRes - gyroBias[2];
+                    angle += 2 * (gz) * 0.001;
+                    errorP = 3 * (rightFront - leftFront - frontOffset);
+//                    errorP = 20 * (angle - targetAngle);
+                    errorD = errorP - oldErrorP;
+                }
+//                getGres();
+//                gz = (float)readGyroData() * gRes - gyroBias[2];
+//                angle += 1 * (gz) * 0.001;
                 errorP = 3 * (rightFront - leftFront - frontOffset);
 
                 errorD = errorP - oldErrorP;
@@ -698,20 +745,49 @@ void turnCorrection() {
                 if ((leftFront + rightFront) / 2 >= frontStop) {
                     turn = true;
                     i = 30;
+                    rightBaseSpeed = 240;
                 }
             }
             else {
                 turn = true;
+                rightBaseSpeed = 240;
             }
         }
     }
+    //end if (!straight)
     else {
         const int wallFrontValue = 350;
         getGres();
         gz = (float)readGyroData() * gRes - gyroBias[2];
         angle += 1 * (gz) * 0.001;
-        if (rightFront > wallFrontValue && leftFront > wallFrontValue) {
-            errorP = 3 * (rightFront - leftFront - frontOffset);
+//        if (rightFront > wallFrontValue && leftFront > wallFrontValue) {
+//            errorP = 3 * (rightFront - leftFront - frontOffset);
+//        }
+        if (wallFront()) {
+          if (wallLeft()) {
+                    const int wallDist = 1900; // Make this bigger to move closer to the wall
+                    // Only left wall
+
+//                    errorP = 20 * (angle - targetAngle) + .5 * (leftSensor - wallDist);
+                      errorP = .5 * (leftSensor - wallDist) + 3 * (rightFront - leftFront - frontOffset);
+//                    errorP = 3 * (rightFront - leftFront - frontOffset);
+                    errorD = errorP - oldErrorP;
+                }
+                else if (wallRight()) {
+                    const int wallDist = 2000; //Make this bigger to move closer to the wall
+                    // Only right wall
+
+//                    errorP = 20 * (angle - targetAngle) - .5 * (rightSensor - wallDist);
+//                    errorP = 3 * (rightFront - leftFront - frontOffset);
+                    errorP = -.5 * (rightSensor - wallDist) + 3 * (rightFront - leftFront - frontOffset);
+                    errorD = errorP - oldErrorP;
+                }
+                else {
+
+                    errorP = 3 * (rightFront - leftFront - frontOffset);
+//                    errorP = 20 * (angle - targetAngle);
+                    errorD = errorP - oldErrorP;
+                }
         }
         else {
             errorP = 20 * (angle - targetAngle);
@@ -743,6 +819,7 @@ void turnCorrection() {
         }
     }
 
+    //Detects when turn is done
     if (straight) {
         if (wallFront()) {
             const int frontStop = 500;
@@ -816,7 +893,6 @@ void pivotTurnRight() {
             getGres();
             gz = (float)readGyroData() * gRes - gyroBias[2];
             degreesTraveled += 2 * (gz - 0) * 0.001;
-            Serial.println(degreesTraveled);
             count = millis();
         }
     }
