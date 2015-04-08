@@ -20,8 +20,6 @@ extern char movesBuffer[256];
 extern bool walls_global[3];
 extern volatile bool movesReady;
 extern volatile bool movesDoneAndWallsSet;
-extern char bluetoothBuffer[5];
-extern void bluetoothPrint();
 #endif
 
 namespace mack {
@@ -257,14 +255,9 @@ void MackAlgo::readWalls() {
     bool wallRight = m_mouse->wallRight();
     bool wallLeft = m_mouse->wallLeft();
 #else
-    bool wallLeft = walls_global[0];
-    bool wallFront = walls_global[1];
-    bool wallRight = walls_global[2];
-    bluetoothBuffer[0]=wallLeft?'1':'0';
-    bluetoothBuffer[1]=wallFront?'1':'0';
-    bluetoothBuffer[2]=wallRight?'1':'0';
-    bluetoothBuffer[3]=0;
-    bluetoothPrint();
+    bool wallFront = walls_global[0];
+    bool wallRight = walls_global[1];
+    bool wallLeft = walls_global[2];
     movesDoneAndWallsSet = false;
 #endif
 
@@ -301,32 +294,19 @@ bool MackAlgo::inGoal(int x, int y) {
     return horizontal && vertical;
 }
 
-#if (SIMULATOR)
-void MackAlgo::turnLeft() {
+void MackAlgo::turnLeftUpdateState() {
     m_d = (m_d + 3) % 4;
-    m_mouse->turnLeft();
 }
 
-void MackAlgo::turnRight() {
+void MackAlgo::turnRightUpdateState() {
     m_d = (m_d + 1) % 4;
-    m_mouse->turnRight();
 }
-#endif
 
-void MackAlgo::turnAround() {
-#if (SIMULATOR)
+void MackAlgo::turnAroundUpdateState() {
     m_d = (m_d + 2) % 4;
-    m_mouse->turnAround();
-#else
-    movesBuffer[0] = 'a';
-    movesBuffer[1] = '\0';
-    bluetoothBuffer[0] = 'a';
-    bluetoothBuffer[1] = '\0
-    movesReady = true;
-#endif
 }
 
-void MackAlgo::moveForward() {
+void MackAlgo::moveForwardUpdateState() {
     switch (m_d){
         case NORTH:
             m_y += 1;
@@ -341,6 +321,26 @@ void MackAlgo::moveForward() {
             m_x -= 1;
             break;
     }
+}
+
+#if (SIMULATOR)
+void MackAlgo::turnLeft() {
+    turnLeftUpdateState();
+    m_mouse->turnLeft();
+}
+
+void MackAlgo::turnRight() {
+    turnRightUpdateState();
+    m_mouse->turnRight();
+}
+
+void MackAlgo::turnAround() {
+    turnAroundUpdateState();
+    m_mouse->turnAround();
+}
+#endif
+
+void MackAlgo::moveForward() {
 #if (SIMULATOR)
     m_mouse->moveForward();
 #else
@@ -348,6 +348,7 @@ void MackAlgo::moveForward() {
     movesBuffer[1] = '\0';
     movesReady = true;
 #endif
+    moveForwardUpdateState();
 }
 
 void MackAlgo::leftAndForward() {
@@ -358,6 +359,8 @@ void MackAlgo::leftAndForward() {
     movesBuffer[0] = 'l';
     movesBuffer[1] = '\0';
     movesReady = true;
+    turnLeftUpdateState();
+    moveForwardUpdateState();
 #endif
 }
 
@@ -369,6 +372,22 @@ void MackAlgo::rightAndForward() {
     movesBuffer[0] = 'r';
     movesBuffer[1] = '\0';
     movesReady = true;
+    turnRightUpdateState();
+    moveForwardUpdateState();
+#endif
+}
+
+void MackAlgo::aroundAndForward() {
+#if (SIMULATOR)
+    turnAround();
+    moveForward();
+#else
+    movesBuffer[0] = 'a';
+    movesBuffer[1] = 'f';
+    movesBuffer[2] = '\0';
+    movesReady = true;
+    turnAroundUpdateState();
+    moveForwardUpdateState();
 #endif
 }
 
@@ -510,8 +529,7 @@ void MackAlgo::moveOneCell(Cell* target) {
             rightAndForward();
         }
         else if (moveDirection == (m_d + 2) % 4) {
-            turnAround();
-            moveForward();
+            aroundAndForward();
         }
         else if (moveDirection == (m_d + 3) % 4) {
             leftAndForward();
