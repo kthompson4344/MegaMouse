@@ -19,8 +19,8 @@
 
 //Do the special case blocking call in correction
 
-//Handle resetting ticks and case when backed up against cell (like when it starts or after turn arounds)!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 //Check all TODOs
 
 //Test turnAround without walls on both sides
+
+//Recalibrate base speeds
