@@ -17,6 +17,7 @@ int rightBaseSpeed = 240;
 
 /* Variables for interface between drive code and algorithm */
 char movesBuffer[256];
+char bluetoothBuffer[5];
 bool walls_global[3] = {false, false, false}; //Left, Front, Right
 volatile bool movesReady = false; // Set to true by algorithm, set to false by drive. // TODO: First move
 volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to false by algorithm.
@@ -60,12 +61,12 @@ const int buttonPin = 24;
 const int LED = 11;
 
 void setup() {
-
+    
     float degreesTraveled;
     float initialZ;
     //Serial.begin(9600);
-    //mySerial.begin(115200);
-    Serial.begin(115200);
+    mySerial.begin(115200);
+//    Serial.begin(115200);
     // 12 bit ADC resolution
     analogReadResolution(12);
 
@@ -80,12 +81,13 @@ void setup() {
 
     // Wait for Button Press to Start
     // readSensors();
-    //while (digitalRead(buttonPin) == 1) {
-    //}
+    while (digitalRead(buttonPin) == 1) {
+    }
     //while (rightFront < 3300 && rightMiddleValue < 3300 && rightSensor < 3300) {
     //        readSensors();
     //        Serial.println(leftSensor);
     //}
+    
     delay(3000);
     setupGyro();
     delay(1000);
@@ -102,6 +104,7 @@ void setup() {
     Serial.println(walls_global[2]);
     haveSensorReading = false;
     movesDoneAndWallsSet = true;
+    mySerial.println("Garbage");
     correctionTimer.priority(255);
     correctionTimer.begin(correction, 1000);
     
@@ -114,6 +117,7 @@ void loop() {
     ///Serial.println("Front: " + walls_global[1] ? "yes":"no");
   ////////  Serial.println("Right: " + walls_global[2] ? "yes":"no");
    algo.solve();
+//   bluetoothPrint();
    //solve();
 
 }
@@ -131,6 +135,9 @@ void correction() {
     }
     
     if (currentMoveDone) {
+        
+        
+        bluetoothPrint();
         if (firstMove) {
             firstMove = false;
         }
@@ -140,6 +147,9 @@ void correction() {
             // Make sure walls_global is set by the time we get here (STILL NEED TO DO IN TURN AROUND).
             movesReady = false;
             movedForward = false;
+            //mySerial.print(walls_global[0]);
+            //mySerial.print(walls_global[1]);
+            //mySerial.println(walls_global[2]);
             movesDoneAndWallsSet = true;
             indexInBuffer = 0;
             haveSensorReading = false;
@@ -420,6 +430,7 @@ void forwardCorrection() {
 
     // Next Cell Wall Detection
     if ((rightTicks + leftTicks) / 2 >= readingTicks && !nextCellDecided) {
+      
         nextRightValid = rightMiddleValue > noWallRight;
         nextLeftValid = leftMiddleValue > noWallLeft;
         nextCellDecided = true;
@@ -429,8 +440,9 @@ void forwardCorrection() {
         if (rightValid != nextRightValid) {
             rightValid = false;
         }
+        //mySerial.println(rightValid);
     }
-
+    
     if ((rightTicks + leftTicks) / 2 >= newSideTicks) {
         leftValid = nextLeftValid;
         rightValid = nextRightValid;
@@ -830,12 +842,12 @@ void solve() {
     // 'r' - right
     // 'a' - turn around
     // Then put a null character at the end of moveBuffer.
-    if (!walls[2]) {
-        movesBuffer[0] = 'r';
+    if (!walls[1]) {
+        movesBuffer[0] = 'f';
         movesBuffer[1] = 0;
     }
-    else if (!walls[1]) {
-        movesBuffer[0] = 'f';
+    else if (!walls[2]) {
+        movesBuffer[0] = 'r';
         movesBuffer[1] = 0;
     }
     else if (!walls[0]) {
@@ -851,6 +863,7 @@ void solve() {
     movesReady = true;
 }
 
+/*
 void accelerate(int numCells) {
     int cellNumb = 1;
     static bool cellDecided = false;
@@ -888,3 +901,15 @@ void accelerate(int numCells) {
         }
     }
 }
+*/
+
+void bluetoothPrint() {
+  while(!haveSensorReading) {
+  }
+  int i = 0;
+  while(i!=4||bluetoothBuffer[i]!=0) {
+    mySerial.print(bluetoothBuffer[i++]);
+  }
+  mySerial.println();
+}
+

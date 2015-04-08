@@ -20,6 +20,8 @@ extern char movesBuffer[256];
 extern bool walls_global[3];
 extern volatile bool movesReady;
 extern volatile bool movesDoneAndWallsSet;
+extern char bluetoothBuffer[5];
+extern void bluetoothPrint();
 #endif
 
 namespace mack {
@@ -258,6 +260,11 @@ void MackAlgo::readWalls() {
     bool wallLeft = walls_global[0];
     bool wallFront = walls_global[1];
     bool wallRight = walls_global[2];
+    bluetoothBuffer[0]=wallLeft?'1':'0';
+    bluetoothBuffer[1]=wallFront?'1':'0';
+    bluetoothBuffer[2]=wallRight?'1':'0';
+    bluetoothBuffer[3]=0;
+    bluetoothPrint();
     movesDoneAndWallsSet = false;
 #endif
 
@@ -313,6 +320,8 @@ void MackAlgo::turnAround() {
 #else
     movesBuffer[0] = 'a';
     movesBuffer[1] = '\0';
+    bluetoothBuffer[0] = 'a';
+    bluetoothBuffer[1] = '\0
     movesReady = true;
 #endif
 }
