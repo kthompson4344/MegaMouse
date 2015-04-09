@@ -329,7 +329,7 @@ void turnAround() {
         errorP = 20 * (angle);
         errorD = errorP;
       }
-      errorP += 3*(rightFront - leftFront);
+//      errorP += 3*(rightFront - leftFront);
       errorD = errorP;
       totalError = straightKp * errorP + Kd * errorD;
 
@@ -351,7 +351,7 @@ void turnAround() {
   }
   //Turn Around with no wall in front
   else {
-    const int tickValue = 75;
+    const int tickValue = 100;
     while ((rightTicks + leftTicks) / 2 < tickValue) {
       if (wallRight() && wallLeft()) {
         errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
@@ -419,8 +419,14 @@ void turnAround() {
     setRightPWM(i);
   }
   delay(200);
-  }
   firstCell = true;
+  }
+  else {
+    delay(200);
+    afterTurnAround = true;
+    
+  }
+  
   //    needMove = true;
 }
 
@@ -496,6 +502,7 @@ void forwardCorrection() {
     //        straightAngle += 2 * (gz) * 0.001;
   }
   else if (leftValid) {
+    
     // Only left wall
     // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
     getGres();
@@ -513,11 +520,25 @@ void forwardCorrection() {
     errorD = errorP - oldErrorP;
   }
   else {
+    static int targetAngle = 0;
     // No walls, use gyro to correct
     getGres();
     gz = (float)readGyroData() * gRes - gyroBias[2];
     angle += 2 * (gz) * 0.001;
-    errorP = 20 * (angle);
+//    if (!wallFront) {
+//      errorP = -20 * (leftFront - rightFront) + 20*angle;
+//    }
+//    else {
+//    if (rightSensor > 1800 && !currentWallRight) {
+//      targetAngle+=2;
+//    }
+//    if (leftSensor > 1800 && !currentWallLeft) {
+//      targetAngle-=2;
+//    }
+
+       errorP = 20 * (angle - targetAngle);
+    
+//    }
     errorD = errorP - oldErrorP;
   }
 
@@ -631,8 +652,9 @@ void turnCorrection() {
 
       gz = (int)readGyroData() * gRes - gyroBias[2];
 
+      //Smaller value = overturn
       if (moveType == TURN_RIGHT) {
-        angle += 1.37 * (gz) * 0.001;
+        angle += 1.375 * (gz) * 0.001;
         errorP = 100 * (angle + targetAngle);
       }
       else {
@@ -669,6 +691,7 @@ void turnCorrection() {
           angle += 2 * (gz) * 0.001;
           //                    errorP = 20 * (angle - targetAngle) + .5 * (leftSensor - wallDist);
           errorP = .5 * (leftSensor - leftWallDist) + 3 * (rightFront - leftFront - frontOffset);
+//            errorP = .5 * (leftSensor - leftWallDist);
           //                    errorP = 3 * (rightFront - leftFront - frontOffset);
           errorD = errorP - oldErrorP;
         }
