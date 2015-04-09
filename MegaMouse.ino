@@ -28,6 +28,8 @@ volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to fals
 bool currentMoveDone = false;
 bool firstMove = true;
 bool accelerate = true;
+int goalSpeed = 0;
+
 
 const int rxPin = 0;
 const int txPin = 16;
@@ -50,7 +52,7 @@ volatile bool haveSensorReading = false;
 IntervalTimer correctionTimer;
 IntervalTimer sensorTimer;
 IntervalTimer refreshSensorTimer;
-SoftwareSerial mySerial = SoftwareSerial(rxPin, txPin);
+//SoftwareSerial mySerial = SoftwareSerial(rxPin, txPin);
 volatile float angle = 0.0;
 
 volatile enum {
@@ -69,7 +71,7 @@ void setup() {
   float degreesTraveled;
   float initialZ;
   //Serial.begin(9600);
-  mySerial.begin(115200);
+  //mySerial.begin(115200);
   //    Serial.begin(115200);
   // 12 bit ADC resolution
   analogReadResolution(12);
@@ -115,9 +117,9 @@ void loop() {
   ///Serial.println("Front: " + walls_global[1] ? "yes":"no");
   ////////  Serial.println("Right: " + walls_global[2] ? "yes":"no");
 //  wheelCalib();
-  algo.solve();
+ // algo.solve();
   //   bluetoothPrint();
-  //   solve();
+    solve();
 
 }
 
@@ -130,9 +132,9 @@ void wheelCalib(){
   setRightPWM(247);
   while(1){
     delay(1000);
-    Serial.print(leftTicks);
-    Serial.print(" ");
-    Serial.println(rightTicks);
+    //Serial.print(leftTicks);
+   // Serial.print(" ");
+    //Serial.println(rightTicks);
     leftTicks = 0;
     rightTicks = 0;
   }
@@ -142,7 +144,9 @@ void wheelCalib(){
 // Mack calls certain number of move forwards; we add however many ticks for every move forward.
 
 void correction() {
-
+  static int totalForwardCount = 0;
+  static int forwardCount = 0;
+  static bool in_acceleration = false;
   static byte indexInBuffer = 0;
   static bool movedForward = false;
   if (!movesReady) {
@@ -153,17 +157,23 @@ void correction() {
 
   if (currentMoveDone) {
 
-    
+    movedForward = false;
     //        bluetoothPrint();
     if (firstMove) {
       firstMove = false;
+    }
+    if(forwardCount!=0) {
+      forwardCount--;
+    } else {
+      totalForwardCount = 0;
+      in_acceleration = false;
     }
     indexInBuffer += 1;
     currentMoveDone = false;
     if (movesBuffer[indexInBuffer] == 0) {
       // Make sure walls_global is set by the time we get here (STILL NEED TO DO IN TURN AROUND).
       movesReady = false;
-      movedForward = false;
+      
       //mySerial.print(walls_global[0]);
       //mySerial.print(walls_global[1]);
       //mySerial.println(walls_global[2]);
@@ -176,6 +186,24 @@ void correction() {
 
   switch (movesBuffer[indexInBuffer]) {
     case 'f':
+      if(!in_acceleration) {
+        forwardCount = 1;
+        int index = indexInBuffer+1;
+        while(movesBuffer[index++]=='f') {
+           forwardCount++;
+        }
+        totalForwardCount = forwardCount;
+        goalSpeed = (int)240*(float)forwardCount;
+        if(goalSpeed < 240)
+          goalSpeed = 240;
+        in_acceleration =true;
+      }
+      else {
+      // if((float)totalForwardCount / (float)(forwardCount) == totalForwardCount) {
+        if(forwardCount==2){
+          goalSpeed = 240;
+        }
+      }
       moveType = FORWARD;
 
       if (!movedForward) {
@@ -271,11 +299,11 @@ void moveForward() {
 
   rightValid = wallRight();
   leftValid = wallLeft();
-  bluetoothBuffer[0] = leftValid;
-  bluetoothBuffer[1] = ' ';
-  bluetoothBuffer[2] = rightValid;
-  bluetoothBuffer[3] = 0;
-  bluetoothPrint();
+  //bluetoothBuffer[0] = leftValid;
+  //bluetoothBuffer[1] = ' ';
+  //bluetoothBuffer[2] = rightValid;
+  //bluetoothBuffer[3] = 0;
+  //bluetoothPrint();
   moveType = FORWARD;
   //    needMove = false;
 }
@@ -490,18 +518,22 @@ void forwardCorrection() {
     
     if(leftBaseSpeed==0) {
       leftBaseSpeed = 30;
-      rightBaseSpeed = 45;
+      rightBaseSpeed = 30;
     }
     count++;
     
-    if(count%1==0){
-      leftBaseSpeed++;
-      rightBaseSpeed++;
+    if(count%1==0) { 
+      if(leftBaseSpeed<goalSpeed) {
+        leftBaseSpeed++;
+        rightBaseSpeed++;
+      } else if(leftBaseSpeed>goalSpeed) {
+        leftBaseSpeed=goalSpeed;
+        rightBaseSpeed=goalSpeed; 
+      } else{
+        count = 0; 
+      }
     }
-    if(leftBaseSpeed==240) {
-      accelerate = false; 
-      count = 0;
-    }
+    
   }
   // Next Cell Wall Detection
   if ((rightTicks + leftTicks) / 2 >= readingTicks && !nextCellDecided) {
@@ -715,7 +747,7 @@ void turnCorrection() {
     }
     //end if (turn)
     else {
-      const int frontStop = 650;
+      const int frontStop = 575;
       if (wallFront()) {
         if (wallLeft()) {
           // Only left wall
@@ -889,7 +921,7 @@ void pivotTurnRight() {
   // Gyro calibrated for each speed or turning is not accurate
   float degreesTraveled = 0;
   const int turnSpeed = 450;
-  const float targetDegrees = 155;
+  const float targetDegrees = 150;
   // const int turnSpeed = 45;
   // const int targetDegrees = 85.5
   // const int turnSpeed = 40;
@@ -906,7 +938,7 @@ void pivotTurnRight() {
   gz = (float)readGyroData() * gRes - gyroBias[2];
   initialZ = gz; // May not be necessary
   count = millis();
-  setLeftPWM(turnSpeed - 20);
+  setLeftPWM(turnSpeed - 10);
   setRightPWM(-turnSpeed);
   while (degreesTraveled >= -targetDegrees) {
     uint32_t deltat = millis() - count;
@@ -1044,7 +1076,26 @@ void solve() {
   bool walls[3];
   memcpy(walls, walls_global, 3 * sizeof(bool)); // walls = walls_global
   movesDoneAndWallsSet = false;
-
+  
+  movesBuffer[0] = 'f';
+  movesBuffer[1] = 'f';
+  movesBuffer[2] = 'f';
+  movesBuffer[3] = 'f';
+  movesBuffer[4] = 'f';
+  movesBuffer[5] = 'r';
+  movesBuffer[6] = 'f';
+  movesBuffer[7] = 'a';
+  movesBuffer[8] = 'f';
+  movesBuffer[9] = 'f';
+  movesBuffer[10] = 'l';
+  movesBuffer[11] = 'f';
+  movesBuffer[12] = 'f';
+  movesBuffer[13] = 'f';
+  movesBuffer[14] = 'f';
+  movesBuffer[15] = 'a';
+  movesBuffer[16] = 0;
+  
+/*
   if (!walls[1]) {
     movesBuffer[0] = 'f';
     movesBuffer[1] = 0;
@@ -1062,6 +1113,7 @@ void solve() {
     movesBuffer[1] = 'f';
     movesBuffer[2] = 0;
   }
+  */
 
   movesReady = true;
 }
@@ -1106,7 +1158,7 @@ void accelerate(int numCells) {
 }
 */
 
-void bluetoothPrint() {
+/*void bluetoothPrint() {
   while (!haveSensorReading) {
   }
   int i = 0;
@@ -1114,5 +1166,5 @@ void bluetoothPrint() {
     mySerial.print(bluetoothBuffer[i++]);
   }
   mySerial.println();
-}
+}*/
 
