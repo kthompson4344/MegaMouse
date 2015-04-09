@@ -21,7 +21,7 @@ const int leftWallDist = 1900;
 char movesBuffer[256];
 char bluetoothBuffer[5];
 bool walls_global[3] = {false, false, false}; //Left, Front, Right
-volatile bool movesReady = false; // Set to true by algorithm, set to false by drive. // TODO: First move
+volatile bool movesReady = false; // Set to true by algorithm, set to false by drive. 
 volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to false by algorithm.
 /* End of variables for interface */
 
@@ -187,11 +187,20 @@ void correction() {
       moveType = TURN_RIGHT;
       if (firstMove) {
         correctionTimer.end();
-        //do our special move
+      leftTicks = 0;
+      rightTicks = 0;
+      rightTurnFirstCell();
+      //haveSensorReading = false;
+      // digitalWriteFast(LED, HIGH);
+      // while(!haveSensorReading) {}
+      //digitalWriteFast(LED, LOW);
+      // walls_global[0] = wallLeft();
+      //walls_global[1] = wallFront();
+      // walls_global[2] = wallRight();
+      correctionTimer.priority(255);
         walls_global[0] = wallLeft();
         walls_global[1] = wallFront();
         walls_global[2] = wallRight();
-        currentMoveDone = true;
         haveSensorReading = false;
         correctionTimer.begin(correction, 1000);
         return;
@@ -240,7 +249,7 @@ void moveForward() {
     firstCell = false;
   }
   else if (afterTurnAround) {
-    //TODO
+    
     rightTicks = 100;
     leftTicks = 100;
     afterTurnAround = false;
@@ -303,7 +312,7 @@ void turnAround() {
         errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
         // middle of cell
       }
-      else if (wallRight()) { //TODO - UNTESTED
+      else if (wallRight()) { 
         const int wallDist = rightWallDist; //Make this bigger to move closer to the wall
         // Only right wall
         getGres();
@@ -312,7 +321,7 @@ void turnAround() {
         errorP = 20 * (angle) - .5 * (rightSensor - wallDist);
         errorD = errorP;
       }
-      else if (wallLeft()) { //TODO - UNTESTED
+      else if (wallLeft()) { 
         const int wallDist = leftWallDist; // Make this bigger to move closer to the wall
         // Only left wall
         // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
@@ -322,7 +331,7 @@ void turnAround() {
         errorP = 20 * (angle) + .5 * (leftSensor - wallDist);
         errorD = errorP;
       }
-      else { //TODO - UNTESTED
+      else { 
         getGres();
         gz = (float)readGyroData() * gRes - gyroBias[2];
         angle += 2 * (gz) * 0.001;
@@ -357,7 +366,7 @@ void turnAround() {
         errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
         // middle of cell
       }
-      else if (wallRight()) { //TODO - UNTESTED
+      else if (wallRight()) {
         // Only right wall
         getGres();
         gz = (float)readGyroData() * gRes - gyroBias[2];
@@ -365,7 +374,7 @@ void turnAround() {
         errorP = 20 * (angle) - .5 * (rightSensor - rightWallDist);
         errorD = errorP;
       }
-      else if (wallLeft()) { //TODO - UNTESTED
+      else if (wallLeft()) {
         // Only left wall
         // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
         getGres();
@@ -374,7 +383,7 @@ void turnAround() {
         errorP = 20 * (angle) + .5 * (leftSensor - leftWallDist);
         errorD = errorP;
       }
-      else { //TODO - UNTESTED
+      else { 
         getGres();
         gz = (float)readGyroData() * gRes - gyroBias[2];
         angle += 2 * (gz) * 0.001;
@@ -536,7 +545,7 @@ void forwardCorrection() {
 //      targetAngle-=2;
 //    }
 
-       errorP = 20 * (angle - targetAngle);
+       errorP = 20 * (angle);
     
 //    }
     errorD = errorP - oldErrorP;
@@ -892,19 +901,125 @@ void pivotTurnRight() {
   //    delay(200);
 }
 
+void pivotTurnRight90() {
+  int errorP;
+  int errorD;
+  int totalError;
+  int oldErrorP;
+  int tickCount = 190;
+  // Gyro calibrated for each speed or turning is not accurate
+  float degreesTraveled = 0;
+  const int turnSpeed = 450;
+  const float targetDegrees = 76;
+  // const int turnSpeed = 45;
+  // const int targetDegrees = 85.5
+  // const int turnSpeed = 40;
+  // const int targetDegrees = 86
+  float initialZ;
+  //    rightTicks = 0;
+  //    leftTicks = 0;
+  //    delay(200);
+
+  //    while (rightTicks > -90 || leftTicks < 90) {
+  //    }
+
+  getGres();
+  gz = (float)readGyroData() * gRes - gyroBias[2];
+  initialZ = gz; // May not be necessary
+  count = millis();
+  setLeftPWM(turnSpeed - 20);
+  setRightPWM(-turnSpeed);
+  while (degreesTraveled >= -targetDegrees) {
+    uint32_t deltat = millis() - count;
+    if (deltat > 1) {
+      getGres();
+      gz = (float)readGyroData() * gRes - gyroBias[2];
+      degreesTraveled += 2 * (gz - 0) * 0.001;
+      count = millis();
+    }
+  }
+  //
+  //    // Needs to deccelerate for the motors to stop correctly
+  for (int i = turnSpeed; i >= 0; --i) {
+    setLeftPWM(i);
+    setRightPWM(-i);
+  }
+  
+}
+
+  void rightTurnFirstCell() {
+  const int frontLeftStop = 1900;
+  const int frontRightStop = 1900;
+  bool leftStop = false;
+  bool rightStop = false;
+  int tickCount = 180;
+  int errorP;
+  int errorD;
+  int totalError;
+  bool front;
+  leftBaseSpeed = 240;
+  rightBaseSpeed = 249;
+  moveType = NO;
+
+  //Turn Around with no wall in front
+  
+    const int tickValue = 50;
+    while (leftFront < frontLeftStop && rightFront < frontRightStop) {
+        // Only left wall
+        // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
+        getGres();
+        gz = (float)readGyroData() * gRes - gyroBias[2];
+        angle += 2 * (gz) * 0.001;
+        errorP = 20 * (angle) + .5 * (leftSensor - leftWallDist);
+        errorD = errorP;
+  
+      errorD = errorP;
+      totalError = straightKp * errorP + Kd * errorD;
+
+      // Calculate PWM based on Error
+      currentLeftPWM = leftBaseSpeed + totalError / 124;
+      currentRightPWM = rightBaseSpeed - totalError / 124;
+
+      // Update Motor PWM values
+      setLeftPWM(currentLeftPWM);
+      setRightPWM(currentRightPWM);
+
+      //TODO (this is a hack and shouldn't be here, but it makes it work)
+      haveSensorReading = false;
+      while (!haveSensorReading) {
+        readSensors();
+        delayMicroseconds(80);
+      }
+    
+  }
+  setRightPWM(0);
+  setLeftPWM(0);
+  delay(200);
+
+  pivotTurnRight90();
+
+  angle = 0.0;
+  delay(200);
+  setLeftPWM(-150);
+  setRightPWM(-150);
+  delay(350);
+  for (int i = -150; i < 0; ++i) {
+    setLeftPWM(i);
+    setRightPWM(i);
+  }
+  delay(200);
+  firstCell = true;
+  movesBuffer[0] = 'f';
+  
+}
+
 void solve() {
   while (!movesDoneAndWallsSet) {
   }
   bool walls[3];
   memcpy(walls, walls_global, 3 * sizeof(bool)); // walls = walls_global
   movesDoneAndWallsSet = false;
-  /* TODO: Figure out next moves and put them into moveBuffer. */
 
-  // 'f' - forward
-  // 'l' - left
-  // 'r' - right
-  // 'a' - turn around
-  // Then put a null character at the end of moveBuffer.
   if (!walls[1]) {
     movesBuffer[0] = 'f';
     movesBuffer[1] = 0;
