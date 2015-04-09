@@ -18,9 +18,9 @@ const int leftWallDist = 1900;
 #define Kd 10
 
 /* Variables for interface between drive code and algorithm */
-char movesBuffer[256];
+volatile char movesBuffer[256];
 char bluetoothBuffer[5];
-bool walls_global[3] = {false, false, false}; //Left, Front, Right
+volatile bool walls_global[3] = {false, false, false}; // Left, Front, Right
 volatile bool movesReady = false; // Set to true by algorithm, set to false by drive. 
 volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to false by algorithm.
 /* End of variables for interface */
@@ -29,7 +29,6 @@ bool currentMoveDone = false;
 bool firstMove = true;
 bool accelerate = true;
 int goalSpeed = 0;
-
 
 const int rxPin = 0;
 const int txPin = 16;
@@ -1074,7 +1073,9 @@ void solve() {
   while (!movesDoneAndWallsSet) {
   }
   bool walls[3];
-  memcpy(walls, walls_global, 3 * sizeof(bool)); // walls = walls_global
+  walls[0] = walls_global[0];
+  walls[1] = walls_global[1];
+  walls[2] = walls_global[2];
   movesDoneAndWallsSet = false;
   
   movesBuffer[0] = 'f';
