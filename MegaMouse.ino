@@ -8,8 +8,11 @@
 
 #define hasLeftWall 800
 #define hasRightWall 800
-int leftBaseSpeed = 240;
-int rightBaseSpeed = 240;
+int exploreSpeed = 240;
+int solveSpeed = 240;
+
+int leftBaseSpeed = exploreSpeed;
+int rightBaseSpeed = exploreSpeed;
 const int rightWallDist = 2000;
 const int leftWallDist = 1900;
 // PID Constants
@@ -28,6 +31,7 @@ volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to fals
 bool currentMoveDone = false;
 bool firstMove = true;
 bool accelerate = true;
+bool solving = 1;
 int goalSpeed = 0;
 
 const int rxPin = 0;
@@ -116,7 +120,7 @@ void loop() {
   ///Serial.println("Front: " + walls_global[1] ? "yes":"no");
   ////////  Serial.println("Right: " + walls_global[2] ? "yes":"no");
 //  wheelCalib();
- // algo.solve();
+//  algo.solve();
   //   bluetoothPrint();
     solve();
 
@@ -192,9 +196,16 @@ void correction() {
            forwardCount++;
         }
         totalForwardCount = forwardCount;
-        goalSpeed = (int)240*(float)forwardCount;
-        if(goalSpeed < 240)
-          goalSpeed = 240;
+        if (solving) {
+          goalSpeed = 240; //(int)solveSpeed*(float)forwardCount;
+          if(goalSpeed < solveSpeed)
+            goalSpeed = solveSpeed;
+        }
+        else {
+          goalSpeed = (int)exploreSpeed*(float)forwardCount;
+          if(goalSpeed < exploreSpeed)
+            goalSpeed = exploreSpeed;
+        }
         in_acceleration =true;
       }
       else {
@@ -291,10 +302,10 @@ void moveForward() {
     rightTicks = 0;
     leftTicks = 0;
   }
-  if(!accelerate) {
-      leftBaseSpeed = 240;//240
-      rightBaseSpeed = 240;//240
-  }
+//  if(!accelerate) {
+//      leftBaseSpeed = 240;//240
+//      rightBaseSpeed = 240;//240
+//  }
 
   rightValid = wallRight();
   leftValid = wallLeft();
@@ -331,8 +342,8 @@ void turnAround() {
   int errorD;
   int totalError;
   bool front;
-  leftBaseSpeed = 240;
-  rightBaseSpeed = 240;
+  leftBaseSpeed = exploreSpeed;
+  rightBaseSpeed = exploreSpeed;
   moveType = NO;
   if (wallFront()) {
     front = true;
@@ -513,6 +524,7 @@ void forwardCorrection() {
   static bool currentWallRight = true;
   static bool ticksDecided = false;
   static int count = 0;
+  
   if(accelerate) {
     
     if(leftBaseSpeed==0) {
@@ -734,7 +746,16 @@ void turnCorrection() {
       leftTicks = 0;
       totalError = turnKp * errorP + Kd * errorD;
       oldErrorP = errorP;
-
+      
+      if (solving) {
+      leftBaseSpeed = solveSpeed;
+      rightBaseSpeed = solveSpeed;
+      }
+      else {
+        leftBaseSpeed = exploreSpeed;
+        rightBaseSpeed = exploreSpeed;
+      }
+      
       // Calculate PWM based on Error
       currentLeftPWM = leftBaseSpeed + totalError / 124;
       currentRightPWM = rightBaseSpeed - totalError / 124;
@@ -798,13 +819,13 @@ void turnCorrection() {
         if ((leftFront + rightFront) / 2 >= frontStop) {
           turn = true;
           i = 30;
-          rightBaseSpeed = 240;
+          rightBaseSpeed = exploreSpeed;
           angle = 0;
         }
       }
       else {
         turn = true;
-        rightBaseSpeed = 240;
+        rightBaseSpeed = exploreSpeed;
         angle = 0;
       }
     }
@@ -1013,12 +1034,12 @@ void pivotTurnRight90() {
   int errorD;
   int totalError;
   bool front;
-  leftBaseSpeed = 240;
-  rightBaseSpeed = 240;
+  leftBaseSpeed = exploreSpeed;
+  rightBaseSpeed = exploreSpeed;
   moveType = NO;
 
   //Turn Around with no wall in front
-  
+    
     const int tickValue = 50;
     while (leftFront < frontLeftStop && rightFront < frontRightStop) {
         // Only left wall
@@ -1078,31 +1099,63 @@ void solve() {
   walls[2] = walls_global[2];
   movesDoneAndWallsSet = false;
   
-  movesBuffer[0] = 'f';
+//  movesBuffer[0] = 'f';
+//  movesBuffer[1] = 'f';
+//  movesBuffer[2] = 'f';
+//  movesBuffer[3] = 'f';
+//  movesBuffer[4] = 'f';
+//  movesBuffer[5] = 'r';
+//  movesBuffer[6] = 'f'; 
+//  movesBuffer[7] = 'a';
+//  movesBuffer[8] = 'f';
+//  movesBuffer[9] = 'f';
+//  movesBuffer[10] = 'l';
+//  movesBuffer[11] = 'f';
+//  movesBuffer[12] = 'f';
+//  movesBuffer[13] = 'f';
+//  movesBuffer[14] = 'f';
+//  movesBuffer[15] = 'a';
+//  movesBuffer[16] = 0;
+/*movesBuffer[0] = 'f';
   movesBuffer[1] = 'f';
   movesBuffer[2] = 'f';
   movesBuffer[3] = 'f';
   movesBuffer[4] = 'f';
   movesBuffer[5] = 'r';
-  movesBuffer[6] = 'f';
-  movesBuffer[7] = 'a';
-  movesBuffer[8] = 'f';
-  movesBuffer[9] = 'f';
-  movesBuffer[10] = 'l';
+  movesBuffer[6] = 'f'; 
+  movesBuffer[7] = 'r';
+  movesBuffer[8] = 'r';
+  movesBuffer[9] = 'l';
+  movesBuffer[10] = 'f';
   movesBuffer[11] = 'f';
   movesBuffer[12] = 'f';
-  movesBuffer[13] = 'f';
+  movesBuffer[13] = 'l';
   movesBuffer[14] = 'f';
-  movesBuffer[15] = 'a';
-  movesBuffer[16] = 0;
-  
-/*
-  if (!walls[1]) {
-    movesBuffer[0] = 'f';
+  movesBuffer[15] = 'l';
+  movesBuffer[16] = 'l';
+  movesBuffer[17] = 'r';
+  movesBuffer[18] = 'r';
+  movesBuffer[19] = 'l';
+  movesBuffer[20] = 'f';
+  movesBuffer[21] = 'f';
+  movesBuffer[22] = 'l';
+  movesBuffer[23] = 'f';
+  movesBuffer[24] = 'f';
+  movesBuffer[25] = 'l';
+  movesBuffer[26] = 'f';
+  movesBuffer[27] = 'f';
+  movesBuffer[28] = 'f';
+  movesBuffer[29] = 'f';
+  movesBuffer[30] = 'a';
+  movesBuffer[31] = 0;
+  */
+
+  if (!walls[2]) {
+    movesBuffer[0] = 'r';
     movesBuffer[1] = 0;
   }
-  else if (!walls[2]) {
-    movesBuffer[0] = 'r';
+  else if (!walls[1]) {
+    movesBuffer[0] = 'f';
     movesBuffer[1] = 0;
   }
   else if (!walls[0]) {
@@ -1114,50 +1167,10 @@ void solve() {
     movesBuffer[1] = 'f';
     movesBuffer[2] = 0;
   }
-  */
+  
 
   movesReady = true;
 }
-
-/*
-void accelerate(int numCells) {
-    int cellNumb = 1;
-    static bool cellDecided = false;
-    if ((rightTicks + leftTicks) / 2 >= 320 && !cellDecided) {
-        ++cellNumb;
-        cellDecided = true;
-    }
-
-    if ((rightTicks + leftTicks) / 2 <= 10) {
-        cellDecided = false;
-    }
-    if (cellNumb == 1) {
-        static int i = 0;
-        ++i;
-        if (i >= 10) {
-            leftBaseSpeed += 1;
-            rightBaseSpeed += 1;
-            i = 0;
-        }
-        if (leftBaseSpeed >= 400) {
-            rightBaseSpeed = 400;
-            leftBaseSpeed = 400;
-        }
-    }
-    if (cellNumb == numCells - 1 || cellNumb == numCells) {
-        static int i = 0;
-        if (i >= 10) {
-            leftBaseSpeed -= 1;
-            rightBaseSpeed -= 1;
-            i = 0;
-        }
-        if (leftBaseSpeed < 240 || rightBaseSpeed < 240) {
-            leftBaseSpeed = 240;
-            rightBaseSpeed = 240;
-        }
-    }
-}
-*/
 
 /*void bluetoothPrint() {
   while (!haveSensorReading) {
