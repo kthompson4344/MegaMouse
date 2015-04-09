@@ -9,7 +9,7 @@
 #define hasLeftWall 800
 #define hasRightWall 800
 int leftBaseSpeed = 240;
-int rightBaseSpeed = 249;
+int rightBaseSpeed = 240;
 const int rightWallDist = 2000;
 const int leftWallDist = 1900;
 // PID Constants
@@ -27,6 +27,7 @@ volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to fals
 
 bool currentMoveDone = false;
 bool firstMove = true;
+bool accelerate = true;
 
 const int rxPin = 0;
 const int txPin = 16;
@@ -152,7 +153,7 @@ void correction() {
 
   if (currentMoveDone) {
 
-
+    
     //        bluetoothPrint();
     if (firstMove) {
       firstMove = false;
@@ -247,9 +248,14 @@ void moveForward() {
     rightTicks = 70;
     leftTicks = 70;
     firstCell = false;
+    leftBaseSpeed = 0;
+    rightBaseSpeed = 0;
+    accelerate = true;
   }
   else if (afterTurnAround) {
-    
+    leftBaseSpeed = 0;
+    rightBaseSpeed = 0;
+    accelerate = true;
     rightTicks = 100;
     leftTicks = 100;
     afterTurnAround = false;
@@ -258,8 +264,10 @@ void moveForward() {
     rightTicks = 0;
     leftTicks = 0;
   }
-  leftBaseSpeed = 240;//240
-  rightBaseSpeed = 249;//240
+  if(!accelerate) {
+      leftBaseSpeed = 240;//240
+      rightBaseSpeed = 240;//240
+  }
 
   rightValid = wallRight();
   leftValid = wallLeft();
@@ -297,7 +305,7 @@ void turnAround() {
   int totalError;
   bool front;
   leftBaseSpeed = 240;
-  rightBaseSpeed = 249;
+  rightBaseSpeed = 240;
   moveType = NO;
   if (wallFront()) {
     front = true;
@@ -477,7 +485,24 @@ void forwardCorrection() {
   static bool currentWallLeft = true;
   static bool currentWallRight = true;
   static bool ticksDecided = false;
-
+  static int count = 0;
+  if(accelerate) {
+    
+    if(leftBaseSpeed==0) {
+      leftBaseSpeed = 30;
+      rightBaseSpeed = 45;
+    }
+    count++;
+    
+    if(count%1==0){
+      leftBaseSpeed++;
+      rightBaseSpeed++;
+    }
+    if(leftBaseSpeed==240) {
+      accelerate = false; 
+      count = 0;
+    }
+  }
   // Next Cell Wall Detection
   if ((rightTicks + leftTicks) / 2 >= readingTicks && !nextCellDecided) {
 
@@ -958,7 +983,7 @@ void pivotTurnRight90() {
   int totalError;
   bool front;
   leftBaseSpeed = 240;
-  rightBaseSpeed = 249;
+  rightBaseSpeed = 240;
   moveType = NO;
 
   //Turn Around with no wall in front
