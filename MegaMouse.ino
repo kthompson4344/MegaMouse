@@ -24,7 +24,7 @@ const int leftWallDist = 1900;
 volatile char movesBuffer[256];
 char bluetoothBuffer[5];
 volatile bool walls_global[3] = {false, false, false}; // Left, Front, Right
-volatile bool movesReady = false; // Set to true by algorithm, set to false by drive. 
+volatile bool movesReady = false; // Set to true by algorithm, set to false by drive.
 volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to false by algorithm.
 /* End of variables for interface */
 
@@ -65,6 +65,12 @@ volatile enum {
   TURN_RIGHT = 3,
   TURN_AROUND = 4
 } moveType;
+
+volatile enum {
+  PRE_TURN = 0,
+  TURN = 1,
+  POST_TURN = 2
+} turnSection;
 
 const int buttonPin = 24;
 const int LED = 11;
@@ -119,24 +125,24 @@ void loop() {
   /// Serial.println("Left: " + walls_global[0] ? "yes":"no");
   ///Serial.println("Front: " + walls_global[1] ? "yes":"no");
   ////////  Serial.println("Right: " + walls_global[2] ? "yes":"no");
-//  wheelCalib();
-//  algo.solve();
+  //  wheelCalib();
+  //  algo.solve();
   //   bluetoothPrint();
-    solve();
+  solve();
 
 }
 
-void wheelCalib(){
+void wheelCalib() {
   Serial.begin(9600);
   correctionTimer.end();
   sensorTimer.end();
   refreshSensorTimer.end();
   setLeftPWM(240);
   setRightPWM(247);
-  while(1){
+  while (1) {
     delay(1000);
     //Serial.print(leftTicks);
-   // Serial.print(" ");
+    // Serial.print(" ");
     //Serial.println(rightTicks);
     leftTicks = 0;
     rightTicks = 0;
@@ -165,7 +171,7 @@ void correction() {
     if (firstMove) {
       firstMove = false;
     }
-    if(forwardCount!=0) {
+    if (forwardCount != 0) {
       forwardCount--;
     } else {
       totalForwardCount = 0;
@@ -176,7 +182,7 @@ void correction() {
     if (movesBuffer[indexInBuffer] == 0) {
       // Make sure walls_global is set by the time we get here (STILL NEED TO DO IN TURN AROUND).
       movesReady = false;
-      
+
       //mySerial.print(walls_global[0]);
       //mySerial.print(walls_global[1]);
       //mySerial.println(walls_global[2]);
@@ -189,28 +195,28 @@ void correction() {
 
   switch (movesBuffer[indexInBuffer]) {
     case 'f':
-      if(!in_acceleration) {
+      if (!in_acceleration) {
         forwardCount = 1;
-        int index = indexInBuffer+1;
-        while(movesBuffer[index++]=='f') {
-           forwardCount++;
+        int index = indexInBuffer + 1;
+        while (movesBuffer[index++] == 'f') {
+          forwardCount++;
         }
         totalForwardCount = forwardCount;
         if (solving) {
           goalSpeed = 240; //(int)solveSpeed*(float)forwardCount;
-          if(goalSpeed < solveSpeed)
+          if (goalSpeed < solveSpeed)
             goalSpeed = solveSpeed;
         }
         else {
-          goalSpeed = (int)exploreSpeed*(float)forwardCount;
-          if(goalSpeed < exploreSpeed)
+          goalSpeed = (int)exploreSpeed * (float)forwardCount;
+          if (goalSpeed < exploreSpeed)
             goalSpeed = exploreSpeed;
         }
-        in_acceleration =true;
+        in_acceleration = true;
       }
       else {
-      // if((float)totalForwardCount / (float)(forwardCount) == totalForwardCount) {
-        if(forwardCount==2){
+        // if((float)totalForwardCount / (float)(forwardCount) == totalForwardCount) {
+        if (forwardCount == 2) {
           goalSpeed = 240;
         }
       }
@@ -226,17 +232,17 @@ void correction() {
       moveType = TURN_RIGHT;
       if (firstMove) {
         correctionTimer.end();
-      leftTicks = 0;
-      rightTicks = 0;
-      rightTurnFirstCell();
-      //haveSensorReading = false;
-      // digitalWriteFast(LED, HIGH);
-      // while(!haveSensorReading) {}
-      //digitalWriteFast(LED, LOW);
-      // walls_global[0] = wallLeft();
-      //walls_global[1] = wallFront();
-      // walls_global[2] = wallRight();
-      correctionTimer.priority(255);
+        leftTicks = 0;
+        rightTicks = 0;
+        rightTurnFirstCell();
+        //haveSensorReading = false;
+        // digitalWriteFast(LED, HIGH);
+        // while(!haveSensorReading) {}
+        //digitalWriteFast(LED, LOW);
+        // walls_global[0] = wallLeft();
+        //walls_global[1] = wallFront();
+        // walls_global[2] = wallRight();
+        correctionTimer.priority(255);
         walls_global[0] = wallLeft();
         walls_global[1] = wallFront();
         walls_global[2] = wallRight();
@@ -302,10 +308,10 @@ void moveForward() {
     rightTicks = 0;
     leftTicks = 0;
   }
-//  if(!accelerate) {
-//      leftBaseSpeed = 240;//240
-//      rightBaseSpeed = 240;//240
-//  }
+  //  if(!accelerate) {
+  //      leftBaseSpeed = 240;//240
+  //      rightBaseSpeed = 240;//240
+  //  }
 
   rightValid = wallRight();
   leftValid = wallLeft();
@@ -358,7 +364,7 @@ void turnAround() {
         errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
         // middle of cell
       }
-      else if (wallRight()) { 
+      else if (wallRight()) {
         const int wallDist = rightWallDist; //Make this bigger to move closer to the wall
         // Only right wall
         getGres();
@@ -367,7 +373,7 @@ void turnAround() {
         errorP = 20 * (angle) - .5 * (rightSensor - wallDist);
         errorD = errorP;
       }
-      else if (wallLeft()) { 
+      else if (wallLeft()) {
         const int wallDist = leftWallDist; // Make this bigger to move closer to the wall
         // Only left wall
         // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
@@ -377,14 +383,14 @@ void turnAround() {
         errorP = 20 * (angle) + .5 * (leftSensor - wallDist);
         errorD = errorP;
       }
-      else { 
+      else {
         getGres();
         gz = (float)readGyroData() * gRes - gyroBias[2];
         angle += 2 * (gz) * 0.001;
         errorP = 20 * (angle);
         errorD = errorP;
       }
-//      errorP += 3*(rightFront - leftFront);
+      //      errorP += 3*(rightFront - leftFront);
       errorD = errorP;
       totalError = straightKp * errorP + Kd * errorD;
 
@@ -429,7 +435,7 @@ void turnAround() {
         errorP = 20 * (angle) + .5 * (leftSensor - leftWallDist);
         errorD = errorP;
       }
-      else { 
+      else {
         getGres();
         gz = (float)readGyroData() * gRes - gyroBias[2];
         angle += 2 * (gz) * 0.001;
@@ -466,26 +472,27 @@ void turnAround() {
   angle = 0.0;
   delay(200);
   if (front) {
-  setLeftPWM(-150);
-  setRightPWM(-150);
-  delay(350);
-  for (int i = -150; i < 0; ++i) {
-    setLeftPWM(i);
-    setRightPWM(i);
-  }
-  delay(200);
-  firstCell = true;
+    setLeftPWM(-150);
+    setRightPWM(-150);
+    delay(350);
+    for (int i = -150; i < 0; ++i) {
+      setLeftPWM(i);
+      setRightPWM(i);
+    }
+    delay(200);
+    firstCell = true;
   }
   else {
     delay(200);
     afterTurnAround = true;
-    
+
   }
-  
+
   //    needMove = true;
 }
 
 void forwardCorrection() {
+  digitalWrite(LED, LOW);
   const int oneCellTicks = 327;
   const int noWallRight = 250; // check this value (250)
   const int noWallLeft = 450; // check this value (450)
@@ -524,27 +531,27 @@ void forwardCorrection() {
   static bool currentWallRight = true;
   static bool ticksDecided = false;
   static int count = 0;
-  
-  if(accelerate) {
-    
-    if(leftBaseSpeed==0) {
+
+  if (accelerate) {
+
+    if (leftBaseSpeed == 0) {
       leftBaseSpeed = 30;
       rightBaseSpeed = 30;
     }
     count++;
-    
-    if(count%1==0) { 
-      if(leftBaseSpeed<goalSpeed) {
+
+    if (count % 1 == 0) {
+      if (leftBaseSpeed < goalSpeed) {
         leftBaseSpeed++;
         rightBaseSpeed++;
-      } else if(leftBaseSpeed>goalSpeed) {
-        leftBaseSpeed=goalSpeed;
-        rightBaseSpeed=goalSpeed; 
-      } else{
-        count = 0; 
+      } else if (leftBaseSpeed > goalSpeed) {
+        leftBaseSpeed = goalSpeed;
+        rightBaseSpeed = goalSpeed;
+      } else {
+        count = 0;
       }
     }
-    
+
   }
   // Next Cell Wall Detection
   if ((rightTicks + leftTicks) / 2 >= readingTicks && !nextCellDecided) {
@@ -579,13 +586,15 @@ void forwardCorrection() {
     //        straightAngle += 2 * (gz) * 0.001;
   }
   else if (leftValid) {
-    
+    digitalWrite(LED, HIGH);
     // Only left wall
     // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
     getGres();
     gz = (float)readGyroData() * gRes - gyroBias[2];
     angle += 2 * (gz) * 0.001;
-    errorP = 20 * (angle - 5) + .5 * (leftSensor - leftWallDist);
+    //angle = 0;
+    //errorP = .5*(leftSensor-leftWallDist);
+    errorP = 0 * (angle - 0) + 3 * (leftSensor - leftWallDist);
     errorD = errorP - oldErrorP;
   }
   else if (rightValid) {
@@ -593,7 +602,7 @@ void forwardCorrection() {
     getGres();
     gz = (float)readGyroData() * gRes - gyroBias[2];
     angle += 2 * (gz) * 0.001;
-    errorP = 20 * (angle) - .5 * (rightSensor - rightWallDist);
+    errorP = 20 * (angle) - 3 * (rightSensor - rightWallDist);
     errorD = errorP - oldErrorP;
   }
   else {
@@ -602,20 +611,20 @@ void forwardCorrection() {
     getGres();
     gz = (float)readGyroData() * gRes - gyroBias[2];
     angle += 2 * (gz) * 0.001;
-//    if (!wallFront) {
-//      errorP = -20 * (leftFront - rightFront) + 20*angle;
-//    }
-//    else {
-//    if (rightSensor > 1800 && !currentWallRight) {
-//      targetAngle+=2;
-//    }
-//    if (leftSensor > 1800 && !currentWallLeft) {
-//      targetAngle-=2;
-//    }
+    //    if (!wallFront) {
+    //      errorP = -20 * (leftFront - rightFront) + 20*angle;
+    //    }
+    //    else {
+    //    if (rightSensor > 1800 && !currentWallRight) {
+    //      targetAngle+=2;
+    //    }
+    //    if (leftSensor > 1800 && !currentWallLeft) {
+    //      targetAngle-=2;
+    //    }
 
-       errorP = 20 * (angle);
-    
-//    }
+    errorP = 20 * (angle);
+
+    //    }
     errorD = errorP - oldErrorP;
   }
 
@@ -711,24 +720,23 @@ void forwardCorrection() {
 }
 
 void turnCorrection() {
+  
   int errorP;
   int errorD = 0;
   int oldErrorP = 0;
   int totalError;
   static float targetAngle;
   static int i = 0;
-  static bool turn = false;
-  static bool straight = 0;
   const int frontOffset = 000; // difference between left and right front sensors when lined up with the wall
-
-  if (!straight) {
-    if (turn) {
+  const int preFrontStop = 550;//determines when to start turning
+  switch (turnSection) {
+    case TURN:
       targetAngle = curve2[i];
       getGres();
 
       gz = (int)readGyroData() * gRes - gyroBias[2];
       if (gz >= 1900) {
-        digitalWriteFast(LED,HIGH);
+        digitalWriteFast(LED, HIGH);
       }
 
       //Smaller value = overturn
@@ -748,16 +756,16 @@ void turnCorrection() {
       leftTicks = 0;
       totalError = turnKp * errorP + Kd * errorD;
       oldErrorP = errorP;
-      
+
       if (solving) {
-      leftBaseSpeed = solveSpeed;
-      rightBaseSpeed = solveSpeed;
+        leftBaseSpeed = solveSpeed;
+        rightBaseSpeed = solveSpeed;
       }
       else {
         leftBaseSpeed = exploreSpeed;
         rightBaseSpeed = exploreSpeed;
       }
-      
+
       // Calculate PWM based on Error
       currentLeftPWM = leftBaseSpeed + totalError / 124;
       currentRightPWM = rightBaseSpeed - totalError / 124;
@@ -766,37 +774,34 @@ void turnCorrection() {
       setLeftPWM(currentLeftPWM);
       setRightPWM(currentRightPWM);
       ++i;
-    }
-    //end if (turn)
-    else {
-      const int frontStop = 600;//determines when to start turning
+      break;
+    case PRE_TURN:
+      digitalWrite(LED, LOW);
       if (wallFront()) {
+        //angle = 0;
+        getGres();
+        gz = (float)readGyroData() * gRes - gyroBias[2];
+        angle += 2 * (gz) * 0.001;
         if (wallLeft()) {
           // Only left wall
           // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
-          getGres();
-          gz = (float)readGyroData() * gRes - gyroBias[2];
-          angle += 2 * (gz) * 0.001;
+          
           //                    errorP = 20 * (angle - targetAngle) + .5 * (leftSensor - wallDist);
           errorP = .5 * (leftSensor - leftWallDist) + 3 * (rightFront - leftFront - frontOffset);
-//            errorP = .5 * (leftSensor - leftWallDist);
+          //            errorP = .5 * (leftSensor - leftWallDist);
           //                    errorP = 3 * (rightFront - leftFront - frontOffset);
           errorD = errorP - oldErrorP;
         }
         else if (wallRight()) {
           // Only right wall
-          getGres();
-          gz = (float)readGyroData() * gRes - gyroBias[2];
-          angle += 2 * (gz) * 0.001;
+        
           //                    errorP = 20 * (angle - targetAngle) - .5 * (rightSensor - wallDist);
           //                    errorP = 3 * (rightFront - leftFront - frontOffset);
           errorP = -.5 * (rightSensor - rightWallDist) + 3 * (rightFront - leftFront - frontOffset);
           errorD = errorP - oldErrorP;
         }
-        else {
-          getGres();
-          gz = (float)readGyroData() * gRes - gyroBias[2];
-          angle += 2 * (gz) * 0.001;
+        else { //no wall
+          
           errorP = 3 * (rightFront - leftFront - frontOffset);
           //                    errorP = 20 * (angle - targetAngle);
           errorD = errorP - oldErrorP;
@@ -804,9 +809,9 @@ void turnCorrection() {
         //                getGres();
         //                gz = (float)readGyroData() * gRes - gyroBias[2];
         //                angle += 1 * (gz) * 0.001;
-        errorP = 3 * (rightFront - leftFront - frontOffset);
+        //errorP = 3 * (rightFront - leftFront - frontOffset);
 
-        errorD = errorP - oldErrorP;
+        //errorD = errorP - oldErrorP;
 
         totalError = straightKp * errorP + Kd * errorD;
         oldErrorP = errorP;
@@ -818,69 +823,125 @@ void turnCorrection() {
         // Update Motor PWM values
         setLeftPWM(currentLeftPWM);
         setRightPWM(currentRightPWM);
-        if ((leftFront + rightFront) / 2 >= frontStop) {
-          turn = true;
+        if ((leftFront + rightFront) / 2 >= preFrontStop) {
+          turnSection = TURN;
           i = 30;
           rightBaseSpeed = exploreSpeed;
           angle = 0;
         }
+  
       }
       else {
-        turn = true;
+        turnSection = TURN;
         rightBaseSpeed = exploreSpeed;
         angle = 0;
       }
-    }
-  }
-  //end if (!straight)
-  else {
-    getGres();
-    gz = (float)readGyroData() * gRes - gyroBias[2];
-    angle += 1 * (gz) * 0.001;
-    //        if (rightFront > wallFrontValue && leftFront > wallFrontValue) {
-    //            errorP = 3 * (rightFront - leftFront - frontOffset);
-    //        }
-    if (wallFront()) {
-      if (wallLeft()) {
-        // Only left wall
-
-        //                    errorP = 20 * (angle - targetAngle) + .5 * (leftSensor - wallDist);
-        errorP = .5 * (leftSensor - leftWallDist) + 3 * (rightFront - leftFront - frontOffset);
-        //                    errorP = 3 * (rightFront - leftFront - frontOffset);
-        errorD = errorP - oldErrorP;
-      }
-      else if (wallRight()) {
-        // Only right wall
-        //                    errorP = 20 * (angle - targetAngle) - .5 * (rightSensor - wallDist);
-        //                    errorP = 3 * (rightFront - leftFront - frontOffset);
-        errorP = -.5 * (rightSensor - rightWallDist) + 3 * (rightFront - leftFront - frontOffset);
-        errorD = errorP - oldErrorP;
+      break;
+    case POST_TURN:
+      //angle = 0;
+      getGres();
+      gz = (float)readGyroData() * gRes - gyroBias[2];
+      angle += 1 * (gz) * 0.001;
+      //        if (rightFront > wallFrontValue && leftFront > wallFrontValue) {
+      //            errorP = 3 * (rightFront - leftFront - frontOffset);
+      //        }
+      if (wallFront()) {
+        if (wallLeft() && wallRight()) { //2 wall
+          errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
+          // middle of cell
+           errorD = errorP - oldErrorP;
+        } else if (wallRight()) { //one wall right
+          // Only right wall
+          //                    errorP = 20 * (angle - targetAngle) - .5 * (rightSensor - wallDist);
+          //                    errorP = 3 * (rightFront - leftFront - frontOffset);
+          errorP = -.5 * (rightSensor - rightWallDist) + 3 * (rightFront - leftFront - frontOffset);
+          errorD = errorP - oldErrorP;
+        } else if (wallLeft()) { //one wall left
+          // Only left wall
+          //digitalWrite(LED, HIGH);
+          //                    errorP = 20 * (angle - targetAngle) + .5 * (leftSensor - wallDist);
+          errorP = .5 * (leftSensor - leftWallDist) + 3 * (rightFront - leftFront - frontOffset);
+          //                    errorP = 3 * (rightFront - leftFront - frontOffset);
+          errorD = errorP - oldErrorP;
+        }else { //no wall
+          //digitalWrite(LED, HIGH);
+          errorP = 3 * (rightFront - leftFront - frontOffset);
+          //                    errorP = 20 * (angle - targetAngle);
+          errorD = errorP - oldErrorP;
+        }
       }
       else {
-
-        errorP = 3 * (rightFront - leftFront - frontOffset);
-        //                    errorP = 20 * (angle - targetAngle);
-        errorD = errorP - oldErrorP;
+        if (wallLeft() && wallRight()) { //two wall
+           errorP = leftSensor - rightSensor - 100; // 100 is the offset between left and right sensor when mouse in the
+          // middle of cell
+           errorD = errorP - oldErrorP;
+        } else if (wallLeft()){ //one wall left
+           errorP = .5 * (leftSensor - leftWallDist);
+           errorD = errorP - oldErrorP;
+        } else if (wallRight()) { //one wall right
+           errorP = .5 * (rightSensor - rightWallDist);
+           errorD = errorP - oldErrorP;
+        } else { //no wall
+          errorP = 20 * (angle - targetAngle);
+        }
       }
-    }
-    else {
-      errorP = 20 * (angle - targetAngle);
-    }
 
-    totalError = straightKp * errorP + Kd * errorD;
-    oldErrorP = errorP;
+      totalError = straightKp * errorP + Kd * errorD;
+      oldErrorP = errorP;
 
-    // Calculate PWM based on Error
-    currentLeftPWM = leftBaseSpeed + totalError / 124;
-    currentRightPWM = rightBaseSpeed - totalError / 124;
+      // Calculate PWM based on Error
+      currentLeftPWM = leftBaseSpeed + totalError / 124;
+      currentRightPWM = rightBaseSpeed - totalError / 124;
 
-    // Update Motor PWM values
-    setLeftPWM(currentLeftPWM);
-    setRightPWM(currentRightPWM);
+      // Update Motor PWM values
+      setLeftPWM(currentLeftPWM);
+      setRightPWM(currentRightPWM);
+
+
+      const int targetTicks = 140;// tick values before turn if there is no wall in front
+      if (wallFront()) {
+        const int frontStop = 500;//Determines when turn is done
+        if ((leftFront + rightFront) / 2 >= frontStop) {
+          i = 0;
+          angle = 0.0;
+          oldErrorP = 0;
+          rightTicks = 0;
+          leftTicks = 0;
+          moveType = NO;
+          walls_global[0] = wallLeft();
+          walls_global[1] = wallFront();
+          walls_global[2] = wallRight();
+          currentMoveDone = true;
+          //                needMove = true;
+          turnSection = PRE_TURN;
+        }
+      }
+      else {
+        if ((rightTicks + leftTicks) / 2 >= targetTicks) {
+          i = 0;
+          angle = 0.0;
+          oldErrorP = 0;
+          rightTicks = 0;
+          leftTicks = 0;
+          moveType = NO;
+          walls_global[0] = wallLeft();
+          walls_global[1] = wallFront();
+          walls_global[2] = wallRight();
+          currentMoveDone = true;
+          //                needMove = true;
+          turnSection = PRE_TURN;
+        }
+      }
+      break;
   }
-
-  if (i >= curve2Time && !straight) {
-    straight = true;
+ /* if(moveType == TURN_RIGHT) {
+    if(rightSensor < maxSensor - 50) {
+      turnSection = POST_TURN;
+      leftValid = false;
+      rightValid = false;
+  }*/
+  if (i >= curve2Time && turnSection == TURN) {
+    turnSection = POST_TURN;
 
     leftValid = false;
     rightValid = false;
@@ -890,46 +951,6 @@ void turnCorrection() {
     }
     else {
       targetAngle = 110;
-    }
-  }
-
-  //Detects when turn is done
-  if (straight) {
-    const int targetTicks = 140;// tick values before turn if there is no wall in front
-    if (wallFront()) {
-      const int frontStop = 500;//Determines when turn is done
-      if ((leftFront + rightFront) / 2 >= frontStop) {
-        i = 0;
-        angle = 0.0;
-        oldErrorP = 0;
-        rightTicks = 0;
-        leftTicks = 0;
-        moveType = NO;
-        walls_global[0] = wallLeft();
-        walls_global[1] = wallFront();
-        walls_global[2] = wallRight();
-        currentMoveDone = true;
-        //                needMove = true;
-        straight = false;
-        turn = false;
-      }
-    }
-    else {
-      if ((rightTicks + leftTicks) / 2 >= targetTicks) {
-        i = 0;
-        angle = 0.0;
-        oldErrorP = 0;
-        rightTicks = 0;
-        leftTicks = 0;
-        moveType = NO;
-        walls_global[0] = wallLeft();
-        walls_global[1] = wallFront();
-        walls_global[2] = wallRight();
-        currentMoveDone = true;
-        //                needMove = true;
-        straight = false;
-        turn = false;
-      }
     }
   }
 }
@@ -1023,10 +1044,10 @@ void pivotTurnRight90() {
     setLeftPWM(i);
     setRightPWM(-i);
   }
-  
+
 }
 
-  void rightTurnFirstCell() {
+void rightTurnFirstCell() {
   const int frontLeftStop = 1900;
   const int frontRightStop = 1900;
   bool leftStop = false;
@@ -1041,35 +1062,35 @@ void pivotTurnRight90() {
   moveType = NO;
 
   //Turn Around with no wall in front
-    
-    const int tickValue = 50;
-    while (leftFront < frontLeftStop && rightFront < frontRightStop) {
-        // Only left wall
-        // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
-        getGres();
-        gz = (float)readGyroData() * gRes - gyroBias[2];
-        angle += 2 * (gz) * 0.001;
-        errorP = 20 * (angle) + .5 * (leftSensor - leftWallDist);
-        errorD = errorP;
-  
-      errorD = errorP;
-      totalError = straightKp * errorP + Kd * errorD;
 
-      // Calculate PWM based on Error
-      currentLeftPWM = leftBaseSpeed + totalError / 124;
-      currentRightPWM = rightBaseSpeed - totalError / 124;
+  const int tickValue = 50;
+  while (leftFront < frontLeftStop && rightFront < frontRightStop) {
+    // Only left wall
+    // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
+    getGres();
+    gz = (float)readGyroData() * gRes - gyroBias[2];
+    angle += 2 * (gz) * 0.001;
+    errorP = 20 * (angle) + .5 * (leftSensor - leftWallDist);
+    errorD = errorP;
 
-      // Update Motor PWM values
-      setLeftPWM(currentLeftPWM);
-      setRightPWM(currentRightPWM);
+    errorD = errorP;
+    totalError = straightKp * errorP + Kd * errorD;
 
-      //TODO (this is a hack and shouldn't be here, but it makes it work)
-      haveSensorReading = false;
-      while (!haveSensorReading) {
-        readSensors();
-        delayMicroseconds(80);
-      }
-    
+    // Calculate PWM based on Error
+    currentLeftPWM = leftBaseSpeed + totalError / 124;
+    currentRightPWM = rightBaseSpeed - totalError / 124;
+
+    // Update Motor PWM values
+    setLeftPWM(currentLeftPWM);
+    setRightPWM(currentRightPWM);
+
+    //TODO (this is a hack and shouldn't be here, but it makes it work)
+    haveSensorReading = false;
+    while (!haveSensorReading) {
+      readSensors();
+      delayMicroseconds(80);
+    }
+
   }
   setRightPWM(0);
   setLeftPWM(0);
@@ -1089,7 +1110,7 @@ void pivotTurnRight90() {
   delay(200);
   firstCell = true;
   movesBuffer[0] = 'f';
-  
+
 }
 
 void solve() {
@@ -1100,57 +1121,57 @@ void solve() {
   walls[1] = walls_global[1];
   walls[2] = walls_global[2];
   movesDoneAndWallsSet = false;
-  
-//  movesBuffer[0] = 'f';
-//  movesBuffer[1] = 'f';
-//  movesBuffer[2] = 'f';
-//  movesBuffer[3] = 'f';
-//  movesBuffer[4] = 'f';
-//  movesBuffer[5] = 'r';
-//  movesBuffer[6] = 'f'; 
-//  movesBuffer[7] = 'a';
-//  movesBuffer[8] = 'f';
-//  movesBuffer[9] = 'f';
-//  movesBuffer[10] = 'l';
-//  movesBuffer[11] = 'f';
-//  movesBuffer[12] = 'f';
-//  movesBuffer[13] = 'f';
-//  movesBuffer[14] = 'f';
-//  movesBuffer[15] = 'a';
-//  movesBuffer[16] = 0;
-/*movesBuffer[0] = 'f';
-  movesBuffer[1] = 'f';
-  movesBuffer[2] = 'f';
-  movesBuffer[3] = 'f';
-  movesBuffer[4] = 'f';
-  movesBuffer[5] = 'r';
-  movesBuffer[6] = 'f'; 
-  movesBuffer[7] = 'r';
-  movesBuffer[8] = 'r';
-  movesBuffer[9] = 'l';
-  movesBuffer[10] = 'f';
-  movesBuffer[11] = 'f';
-  movesBuffer[12] = 'f';
-  movesBuffer[13] = 'l';
-  movesBuffer[14] = 'f';
-  movesBuffer[15] = 'l';
-  movesBuffer[16] = 'l';
-  movesBuffer[17] = 'r';
-  movesBuffer[18] = 'r';
-  movesBuffer[19] = 'l';
-  movesBuffer[20] = 'f';
-  movesBuffer[21] = 'f';
-  movesBuffer[22] = 'l';
-  movesBuffer[23] = 'f';
-  movesBuffer[24] = 'f';
-  movesBuffer[25] = 'l';
-  movesBuffer[26] = 'f';
-  movesBuffer[27] = 'f';
-  movesBuffer[28] = 'f';
-  movesBuffer[29] = 'f';
-  movesBuffer[30] = 'a';
-  movesBuffer[31] = 0;
-  */
+
+  //  movesBuffer[0] = 'f';
+  //  movesBuffer[1] = 'f';
+  //  movesBuffer[2] = 'f';
+  //  movesBuffer[3] = 'f';
+  //  movesBuffer[4] = 'f';
+  //  movesBuffer[5] = 'r';
+  //  movesBuffer[6] = 'f';
+  //  movesBuffer[7] = 'a';
+  //  movesBuffer[8] = 'f';
+  //  movesBuffer[9] = 'f';
+  //  movesBuffer[10] = 'l';
+  //  movesBuffer[11] = 'f';
+  //  movesBuffer[12] = 'f';
+  //  movesBuffer[13] = 'f';
+  //  movesBuffer[14] = 'f';
+  //  movesBuffer[15] = 'a';
+  //  movesBuffer[16] = 0;
+  /*movesBuffer[0] = 'f';
+    movesBuffer[1] = 'f';
+    movesBuffer[2] = 'f';
+    movesBuffer[3] = 'f';
+    movesBuffer[4] = 'f';
+    movesBuffer[5] = 'r';
+    movesBuffer[6] = 'f';
+    movesBuffer[7] = 'r';
+    movesBuffer[8] = 'r';
+    movesBuffer[9] = 'l';
+    movesBuffer[10] = 'f';
+    movesBuffer[11] = 'f';
+    movesBuffer[12] = 'f';
+    movesBuffer[13] = 'l';
+    movesBuffer[14] = 'f';
+    movesBuffer[15] = 'l';
+    movesBuffer[16] = 'l';
+    movesBuffer[17] = 'r';
+    movesBuffer[18] = 'r';
+    movesBuffer[19] = 'l';
+    movesBuffer[20] = 'f';
+    movesBuffer[21] = 'f';
+    movesBuffer[22] = 'l';
+    movesBuffer[23] = 'f';
+    movesBuffer[24] = 'f';
+    movesBuffer[25] = 'l';
+    movesBuffer[26] = 'f';
+    movesBuffer[27] = 'f';
+    movesBuffer[28] = 'f';
+    movesBuffer[29] = 'f';
+    movesBuffer[30] = 'a';
+    movesBuffer[31] = 0;
+    */
 
   if (!walls[0]) {
     movesBuffer[0] = 'l';
@@ -1169,7 +1190,7 @@ void solve() {
     movesBuffer[1] = 'f';
     movesBuffer[2] = 0;
   }
-  
+
 
   movesReady = true;
 }
