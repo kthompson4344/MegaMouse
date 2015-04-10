@@ -719,7 +719,6 @@ void turnCorrection() {
   static int i = 0;
   static bool turn = false;
   static bool straight = 0;
-  const int targetTicks = 140;
   const int frontOffset = 000; // difference between left and right front sensors when lined up with the wall
 
   if (!straight) {
@@ -728,6 +727,9 @@ void turnCorrection() {
       getGres();
 
       gz = (int)readGyroData() * gRes - gyroBias[2];
+      if (gz >= 1900) {
+        digitalWriteFast(LED,HIGH);
+      }
 
       //Smaller value = overturn
       if (moveType == TURN_RIGHT) {
@@ -767,7 +769,7 @@ void turnCorrection() {
     }
     //end if (turn)
     else {
-      const int frontStop = 575;
+      const int frontStop = 600;//determines when to start turning
       if (wallFront()) {
         if (wallLeft()) {
           // Only left wall
@@ -832,7 +834,6 @@ void turnCorrection() {
   }
   //end if (!straight)
   else {
-    const int wallFrontValue = 300;
     getGres();
     gz = (float)readGyroData() * gRes - gyroBias[2];
     angle += 1 * (gz) * 0.001;
@@ -894,8 +895,9 @@ void turnCorrection() {
 
   //Detects when turn is done
   if (straight) {
+    const int targetTicks = 140;// tick values before turn if there is no wall in front
     if (wallFront()) {
-      const int frontStop = 500;
+      const int frontStop = 500;//Determines when turn is done
       if ((leftFront + rightFront) / 2 >= frontStop) {
         i = 0;
         angle = 0.0;
@@ -1150,16 +1152,16 @@ void solve() {
   movesBuffer[31] = 0;
   */
 
-  if (!walls[2]) {
-    movesBuffer[0] = 'r';
+  if (!walls[0]) {
+    movesBuffer[0] = 'l';
     movesBuffer[1] = 0;
   }
   else if (!walls[1]) {
     movesBuffer[0] = 'f';
     movesBuffer[1] = 0;
   }
-  else if (!walls[0]) {
-    movesBuffer[0] = 'l';
+  else if (!walls[2]) {
+    movesBuffer[0] = 'r';
     movesBuffer[1] = 0;
   }
   else {
