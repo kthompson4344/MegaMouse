@@ -28,6 +28,8 @@ volatile bool movesReady = false; // Set to true by algorithm, set to false by d
 volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to false by algorithm.
 /* End of variables for interface */
 
+const int maxSpeed = 450;
+
 bool currentMoveDone = false;
 bool firstMove = true;
 bool accelerate = true;
@@ -204,6 +206,8 @@ void correction() {
         totalForwardCount = forwardCount;
         if (solving) {
           goalSpeed = (int)solveSpeed*(float)forwardCount;
+          if (goalSpeed > maxSpeed)
+            goalSpeed = maxSpeed;
           if (goalSpeed < solveSpeed)
             goalSpeed = solveSpeed;
         }
@@ -211,6 +215,8 @@ void correction() {
           goalSpeed = (int)exploreSpeed * (float)forwardCount;
           if (goalSpeed < exploreSpeed)
             goalSpeed = exploreSpeed;
+          if (goalSpeed > maxSpeed)
+            goalSpeed = maxSpeed;
         }
         in_acceleration = true;
       }
@@ -352,7 +358,8 @@ void turnAround() {
   rightBaseSpeed = 249;
   moveType = NO;
   if (wallFront()) {
-    front = true;
+    afterTurnAround = true;
+    front = false;
   }
   else {
     afterTurnAround = true;
