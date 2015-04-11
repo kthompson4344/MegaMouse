@@ -28,7 +28,7 @@ volatile bool movesReady = false; // Set to true by algorithm, set to false by d
 volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to false by algorithm.
 /* End of variables for interface */
 
-const int maxSpeed = 450;
+const int maxSpeed = 500;
 
 bool currentMoveDone = false;
 bool firstMove = true;
@@ -470,7 +470,7 @@ void turnAround() {
   }
   setRightPWM(0);
   setLeftPWM(0);
-  delay(200);
+  delay(50);
   leftStop = false;
   rightStop = false;
 
@@ -945,8 +945,8 @@ void pivotTurnRight() {
   int tickCount = 190;
   // Gyro calibrated for each speed or turning is not accurate
   float degreesTraveled = 0;
-  const int turnSpeed = 450;
-  const float targetDegrees = 150;
+  const int turnSpeed = 400;
+  const float targetDegrees = 137;
   // const int turnSpeed = 45;
   // const int targetDegrees = 85.5
   // const int turnSpeed = 40;
@@ -966,21 +966,23 @@ void pivotTurnRight() {
   setLeftPWM(turnSpeed - 10);
   setRightPWM(-turnSpeed);
   while (degreesTraveled >= -targetDegrees) {
-    uint32_t deltat = millis() - count;
-    if (deltat > 1) {
+//    uint32_t deltat = millis() - count;
+//    if (deltat > 1) {
       getGres();
       gz = (float)readGyroData() * gRes - gyroBias[2];
-      degreesTraveled += 2 * (gz - 0) * 0.001;
+      degreesTraveled += (gz - 0) * 0.001;
       count = millis();
-    }
+      delay(1);
+//    }
   }
   //
   //    // Needs to deccelerate for the motors to stop correctly
-  for (int i = turnSpeed; i >= 0; --i) {
+  for (int i = turnSpeed; i >= 0; i-=50) {
     setLeftPWM(i);
     setRightPWM(-i);
   }
-  //    delay(200);
+  
+     delay(2000);
 }
 
 void pivotTurnRight90() {
@@ -1104,23 +1106,23 @@ void solve() {
   walls[2] = walls_global[2];
   movesDoneAndWallsSet = false;
 
-    movesBuffer[0] = 'f';
-    movesBuffer[1] = 'f';
-    movesBuffer[2] = 'f';
-    movesBuffer[3] = 'f';
-    movesBuffer[4] = 'f';
-    movesBuffer[5] = 'r';
-    movesBuffer[6] = 'f';
-    movesBuffer[7] = 'a';
-    movesBuffer[8] = 'f';
-    movesBuffer[9] = 'f';
-    movesBuffer[10] = 'l';
-    movesBuffer[11] = 'f';
-    movesBuffer[12] = 'f';
-    movesBuffer[13] = 'f';
-    movesBuffer[14] = 'f';
-    movesBuffer[15] = 'a';
-    movesBuffer[16] = 0;
+//    movesBuffer[0] = 'f';
+//    movesBuffer[1] = 'f';
+//    movesBuffer[2] = 'f';
+//    movesBuffer[3] = 'f';
+//    movesBuffer[4] = 'f';
+//    movesBuffer[5] = 'r';
+//    movesBuffer[6] = 'f';
+//    movesBuffer[7] = 'a';
+//    movesBuffer[8] = 'f';
+//    movesBuffer[9] = 'f';
+//    movesBuffer[10] = 'l';
+//    movesBuffer[11] = 'f';
+//    movesBuffer[12] = 'f';
+//    movesBuffer[13] = 'f';
+//    movesBuffer[14] = 'f';
+//    movesBuffer[15] = 'a';
+//    movesBuffer[16] = 0;
   /*movesBuffer[0] = 'f';
     movesBuffer[1] = 'f';
     movesBuffer[2] = 'f';
@@ -1155,23 +1157,23 @@ void solve() {
     movesBuffer[31] = 0;
     */
 
-//  if (!walls[0]) {
-//    movesBuffer[0] = 'l';
-//    movesBuffer[1] = 0;
-//  }
-//  else if (!walls[1]) {
-//    movesBuffer[0] = 'f';
-//    movesBuffer[1] = 0;
-//  }
-//  else if (!walls[2]) {
-//    movesBuffer[0] = 'r';
-//    movesBuffer[1] = 0;
-//  }
-//  else {
-//    movesBuffer[0] = 'a';
-//    movesBuffer[1] = 'f';
-//    movesBuffer[2] = 0;
-//  }
+  if (!walls[0]) {
+    movesBuffer[0] = 'l';
+    movesBuffer[1] = 0;
+  }
+  else if (!walls[1]) {
+    movesBuffer[0] = 'f';
+    movesBuffer[1] = 0;
+  }
+  else if (!walls[2]) {
+    movesBuffer[0] = 'r';
+    movesBuffer[1] = 0;
+  }
+  else {
+    movesBuffer[0] = 'a';
+    movesBuffer[1] = 'f';
+    movesBuffer[2] = 0;
+  }
 
 
   movesReady = true;

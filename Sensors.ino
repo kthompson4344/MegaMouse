@@ -100,7 +100,7 @@ void refreshSensor() {
 }
 
 bool wallFront() {
-  return (leftFront > 250 && rightFront > 250);
+  return ( (leftFront + rightFront)/2 > 200);
 }
 
 bool wallLeft() {
