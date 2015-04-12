@@ -470,7 +470,7 @@ void turnAround() {
   }
   setRightPWM(0);
   setLeftPWM(0);
-  delay(50);
+  delay(200);
   leftStop = false;
   rightStop = false;
 
@@ -982,7 +982,7 @@ void pivotTurnRight() {
     setRightPWM(-i);
   }
   
-     delay(2000);
+     delay(200);
 }
 
 void pivotTurnRight90() {

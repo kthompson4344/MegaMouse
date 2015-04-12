@@ -26,6 +26,8 @@ public:
     void solve();
 #endif
 
+    Cell **getMazeWalls();
+
 private:
 #if (SIMULATOR)
     sim::MouseInterface* m_mouse;
