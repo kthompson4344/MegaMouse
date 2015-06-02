@@ -24,9 +24,7 @@ extern volatile bool movesDoneAndWallsSet;
 
 namespace mack {
 
-Cell **MackAlgo::getMazeWalls() {
-  return &m_maze;
-}
+
   
 #if (SIMULATOR)
 void MackAlgo::solve(sim::MouseInterface* mouse) {

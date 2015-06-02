@@ -1,26 +1,20 @@
 //Axle allignment:/peg correction
 //http://micromouseusa.com/?p=828
 
-//get velocity (ticks/s) or (m/s)
-
 //calibrate sensors
 
 //reflectivity calibration
 
-//tick variable corruption?
+//crash detection - Kyle
 
-//pre-turn alignment
+//Program bluetooth with simulator
 
-//pick up detection
+//Diagonals
 
-//Check one wall correction(turn correction off at posts)
+//Special Moves
 
-//Check forwardCorrection values
+//EEPROM
 
-//Do the special case blocking call in correction
+//Increment Speed
 
-//Check all TODOs
-
-//Test turnAround without walls on both sides
-
-//Recalibrate base speeds
+//Build new robot

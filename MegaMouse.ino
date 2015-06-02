@@ -16,7 +16,7 @@ int rightBaseSpeed = exploreSpeed;
 const int rightWallDist = 2000;
 const int leftWallDist = 1900;
 // PID Constants
-#define straightKp 16
+#define straightKp 3
 #define turnKp 16
 #define Kd 10
 
@@ -358,8 +358,8 @@ void turnAround() {
   rightBaseSpeed = 249;
   moveType = NO;
   if (wallFront()) {
-    afterTurnAround = true;
-    front = false;
+//    afterTurnAround = true;
+    front = true;
   }
   else {
     afterTurnAround = true;
