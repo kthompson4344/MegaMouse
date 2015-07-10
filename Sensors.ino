@@ -80,20 +80,6 @@ void readSensors() {
   }
 }
 
-void displaySensors() {
-
-//   mySerial.print(leftFront);
-//   mySerial.print(" ");
-//   mySerial.print(leftMiddleValue);
-//   mySerial.print(" ");
-//   mySerial.print(leftSensor);
-//   mySerial.print(" ");
-//   mySerial.print(rightSensor);
-//   mySerial.print(" ");
-
-//   mySerial.print(" ");
-//   mySerial.println(rightFront);
-}
 
 void refreshSensor() {
   haveSensorReading = false;

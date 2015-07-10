@@ -5,16 +5,24 @@
 #include "Sensors.h"
 #include "Profiles.h"
 #include <SoftwareSerial.h>
+#include "MackAlgo.h"
+mack::MackAlgo algo;
 
+//Thresholds for left and right sensors detecting side walls
 #define hasLeftWall 800
 #define hasRightWall 800
+
+//Seperate speeds for explore and solve (not currently implemented)
 int exploreSpeed = 240;
 int solveSpeed = 240;
 
 int leftBaseSpeed = exploreSpeed;
 int rightBaseSpeed = exploreSpeed;
+
+//Setpoint for left and right sensors detecting side walls
 const int rightWallDist = 2000;
 const int leftWallDist = 1900;
+
 // PID Constants
 #define straightKp 3
 #define turnKp 16
@@ -28,6 +36,7 @@ volatile bool movesReady = false; // Set to true by algorithm, set to false by d
 volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to false by algorithm.
 /* End of variables for interface */
 
+//Max speed for acceleration
 const int maxSpeed = 500;
 
 bool currentMoveDone = false;
@@ -36,30 +45,29 @@ bool accelerate = true;
 bool solving = 1;
 int goalSpeed = 0;
 
+//RX and TX pins for software serial
 const int rxPin = 0;
 const int txPin = 16;
 
-int ticksR[1000];
-int ticksL[1000];
-int leftM[1000];
-int rightM[1000];
-int leftS[1000];
-int rightS[1000];
-int readings = 0;
 
 volatile bool firstCell = true;
 volatile bool afterTurnAround = false;
+
+//Walls currently on left or right
 volatile bool rightValid = true;
 volatile bool leftValid = true;
-bool go = false;
+
 volatile bool haveSensorReading = false;
 
 IntervalTimer correctionTimer;
 IntervalTimer sensorTimer;
 IntervalTimer refreshSensorTimer;
 //SoftwareSerial mySerial = SoftwareSerial(rxPin, txPin);
+
+//Current angle of the robot
 volatile float angle = 0.0;
 
+//Different move types
 volatile enum {
   NO = 0,
   FORWARD = 1,
@@ -68,22 +76,14 @@ volatile enum {
   TURN_AROUND = 4
 } moveType;
 
-volatile enum {
-  PRE_TURN = 0,
-  TURN = 1,
-  POST_TURN = 2
-} turnSection;
-
 const int buttonPin = 24;
 const int LED = 11;
 
 void setup() {
-
-  float degreesTraveled;
-  float initialZ;
   //Serial.begin(9600);
   //mySerial.begin(115200);
   //    Serial.begin(115200);
+  
   // 12 bit ADC resolution
   analogReadResolution(12);
 
@@ -91,15 +91,14 @@ void setup() {
   setupSensors();
 
   pinMode(LED, OUTPUT);
-
   pinMode(buttonPin, INPUT_PULLUP);
-
   pinMode(intPin, INPUT);
 
   // Wait for Button Press to Start
-  // readSensors();
   while (digitalRead(buttonPin) == 1) {
   }
+  //Start by placing hand in front of sensor (too sensitive)
+  //readSensors();
   //while (rightFront < 3300 && rightMiddleValue < 3300 && rightSensor < 3300) {
   //        readSensors();
   //        Serial.println(leftSensor);
@@ -108,32 +107,37 @@ void setup() {
   delay(3000);
   setupGyro();
   delay(1000);
+  
+  //Reads a different sensor every 80us
   sensorTimer.priority(250);
   sensorTimer.begin(readSensors, 80);
   while (!haveSensorReading) {
   }
+  
+  //read initial sensor values to determine first cell move
   walls_global[0] = wallLeft();
   walls_global[1] = wallFront();
   walls_global[2] = wallRight();
+  
   haveSensorReading = false;
   movesDoneAndWallsSet = true;
+  
+  //Runs every 1ms and controls mouse movements
   correctionTimer.priority(255);
   correctionTimer.begin(correction, 1000);
 }
 
-#include "MackAlgo.h"
-mack::MackAlgo algo;
 void loop() {
-  /// Serial.println("Left: " + walls_global[0] ? "yes":"no");
-  ///Serial.println("Front: " + walls_global[1] ? "yes":"no");
-  ////////  Serial.println("Right: " + walls_global[2] ? "yes":"no");
   //  wheelCalib();
-    algo.solve();
-  //   bluetoothPrint();
-//  solve();
-
+  
+  //Solve the maze
+  algo.solve();
+    
+  //bluetoothPrint();
+  //solve();
 }
 
+//Turns wheels and prints encoder ticks to check difference in speed
 void wheelCalib() {
   Serial.begin(9600);
   correctionTimer.end();
@@ -143,17 +147,15 @@ void wheelCalib() {
   setRightPWM(247);
   while (1) {
     delay(1000);
-    //Serial.print(leftTicks);
-    // Serial.print(" ");
-    //Serial.println(rightTicks);
+    Serial.print(leftTicks);
+    Serial.print(" ");
+    Serial.println(rightTicks);
     leftTicks = 0;
     rightTicks = 0;
   }
 }
 
-
-// Mack calls certain number of move forwards; we add however many ticks for every move forward.
-
+//1ms timer
 void correction() {
   static int totalForwardCount = 0;
   static int forwardCount = 0;
@@ -167,9 +169,7 @@ void correction() {
   }
 
   if (currentMoveDone) {
-
     movedForward = false;
-    //        bluetoothPrint();
     if (firstMove) {
       firstMove = false;
     }
@@ -241,13 +241,6 @@ void correction() {
         leftTicks = 0;
         rightTicks = 0;
         rightTurnFirstCell();
-        //haveSensorReading = false;
-        // digitalWriteFast(LED, HIGH);
-        // while(!haveSensorReading) {}
-        //digitalWriteFast(LED, LOW);
-        // walls_global[0] = wallLeft();
-        //walls_global[1] = wallFront();
-        // walls_global[2] = wallRight();
         correctionTimer.priority(255);
         walls_global[0] = wallLeft();
         walls_global[1] = wallFront();
@@ -267,13 +260,6 @@ void correction() {
       leftTicks = 0;
       rightTicks = 0;
       turnAround();
-      //haveSensorReading = false;
-      // digitalWriteFast(LED, HIGH);
-      // while(!haveSensorReading) {}
-      //digitalWriteFast(LED, LOW);
-      // walls_global[0] = wallLeft();
-      //walls_global[1] = wallFront();
-      // walls_global[2] = wallRight();
       currentMoveDone = true;
       haveSensorReading = false;
       correctionTimer.priority(255);
@@ -281,8 +267,6 @@ void correction() {
       return;
     default:
       moveType = NO;
-      //setLeftPWM(0);
-      //setRightPWM(0);
 
       // Don't need to do anything here if we're turning around.
   }
@@ -291,9 +275,6 @@ void correction() {
 }
 
 void moveForward() {
-  // digitalWriteFast(LED2, HIGH);
-
-  // digitalWriteFast(LED1, HIGH);
   if (firstCell) {
     rightTicks = 70;
     leftTicks = 70;
@@ -314,35 +295,11 @@ void moveForward() {
     rightTicks = 0;
     leftTicks = 0;
   }
-  //  if(!accelerate) {
-  //      leftBaseSpeed = 240;//240
-  //      rightBaseSpeed = 240;//240
-  //  }
 
   rightValid = wallRight();
   leftValid = wallLeft();
-  //bluetoothBuffer[0] = leftValid;
-  //bluetoothBuffer[1] = ' ';
-  //bluetoothBuffer[2] = rightValid;
-  //bluetoothBuffer[3] = 0;
-  //bluetoothPrint();
   moveType = FORWARD;
-  //    needMove = false;
 }
-
-//void turnRight() {
-//  leftBaseSpeed = 240;
-//  rightBaseSpeed = 240;
-//  moveType = TURN_RIGHT;
-//  //    needMove = false;
-//}
-//
-//void turnLeft() {
-//  leftBaseSpeed = 240;
-//  rightBaseSpeed = 240;
-//  moveType = TURN_LEFT;
-//  //    needMove = false;
-//}
 
 void turnAround() {
   const int frontLeftStop = 1400;
@@ -358,7 +315,6 @@ void turnAround() {
   rightBaseSpeed = 249;
   moveType = NO;
   if (wallFront()) {
-//    afterTurnAround = true;
     front = true;
   }
   else {
@@ -417,6 +373,7 @@ void turnAround() {
       }
     }
   }
+  
   //Turn Around with no wall in front
   else {
     const int tickValue = 100;
@@ -495,7 +452,6 @@ void turnAround() {
 
   }
 
-  //    needMove = true;
 }
 
 void forwardCorrection() {
@@ -512,9 +468,6 @@ void forwardCorrection() {
   const int noWallTicks = 209;
   const int frontWallTicks = 204;
 
-  // no walls right and left reach 1000 at 213
-  // no wall front, wall back, drops below 800 at 222
-  // wall front, no walls back, goes above 1000 at 196
   // encoder tick value when we check walls a cell ahead
   const int readingTicks = 173; // check this value (163)
   // encoder tick value when we switch to next cell's values
@@ -523,13 +476,10 @@ void forwardCorrection() {
   static bool nextRightValid;
   static bool nextLeftValid;
   static bool nextCellDecided = false;
-  //    int righTicksRemaining;
-  //    int leftTicksRemaining;
   int errorP;
   int errorD;
   int oldErrorP = 0;
   int totalError;
-  //    static float angle;
   static int lastTicksL;
   static int lastTicksR;
   static float straightAngle = 0.0;
@@ -572,13 +522,11 @@ void forwardCorrection() {
     if (rightValid != nextRightValid) {
       rightValid = false;
     }
-    //mySerial.println(rightValid);
   }
 
   if ((rightTicks + leftTicks) / 2 >= newSideTicks) {
     leftValid = nextLeftValid;
     rightValid = nextRightValid;
-    // nextCellDecided = false;
   }
 
   if (leftValid && rightValid) {
@@ -633,10 +581,7 @@ void forwardCorrection() {
     errorD = errorP - oldErrorP;
   }
 
-  // no walls right and left reach 1000 at 213
-  // no wall front, wall back, drops below 800 at 222
-  // wall front, no walls back, goes above 1000 at 196
-
+//Peg Correction
 #if 0
   // No walls in next cell or current cell
   if (!currentWallRight && !nextRightValid && !ticksDecided) {
@@ -724,6 +669,7 @@ void forwardCorrection() {
   setRightPWM(currentRightPWM);
 }
 
+//Curve Turn
 void turnCorrection() {
   int errorP;
   int errorD = 0;
@@ -734,7 +680,7 @@ void turnCorrection() {
   static bool turn = false;
   static bool straight = 0;
   const int targetTicks = 140;
-  const int frontOffset = 000; // difference between left and right front sensors when lined up with the wall
+  const int frontOffset = 0; // difference between left and right front sensors when lined up with the wall
 
   if (!straight) {
     if (turn) {
@@ -947,17 +893,7 @@ void pivotTurnRight() {
   float degreesTraveled = 0;
   const int turnSpeed = 400;
   const float targetDegrees = 137;
-  // const int turnSpeed = 45;
-  // const int targetDegrees = 85.5
-  // const int turnSpeed = 40;
-  // const int targetDegrees = 86
   float initialZ;
-  //    rightTicks = 0;
-  //    leftTicks = 0;
-  //    delay(200);
-
-  //    while (rightTicks > -90 || leftTicks < 90) {
-  //    }
 
   getGres();
   gz = (float)readGyroData() * gRes - gyroBias[2];
@@ -966,22 +902,18 @@ void pivotTurnRight() {
   setLeftPWM(turnSpeed - 10);
   setRightPWM(-turnSpeed);
   while (degreesTraveled >= -targetDegrees) {
-//    uint32_t deltat = millis() - count;
-//    if (deltat > 1) {
       getGres();
       gz = (float)readGyroData() * gRes - gyroBias[2];
       degreesTraveled += (gz - 0) * 0.001;
       count = millis();
       delay(1);
-//    }
   }
-  //
-  //    // Needs to deccelerate for the motors to stop correctly
+  
+  // Needs to deccelerate for the motors to stop correctly
   for (int i = turnSpeed; i >= 0; i-=50) {
     setLeftPWM(i);
     setRightPWM(-i);
   }
-  
      delay(200);
 }
 
@@ -1031,6 +963,7 @@ void pivotTurnRight90() {
 
 }
 
+// If mouse starts facing a wall, this turns in the first cell to face the opening
 void rightTurnFirstCell() {
   const int frontLeftStop = 1900;
   const int frontRightStop = 1900;
