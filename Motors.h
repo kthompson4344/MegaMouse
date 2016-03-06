@@ -1,11 +1,14 @@
 #pragma once
 
-const int ML1 = 20;
-const int ML2 = 6; //63,62, MLA, MRB
-const int MR1 = 21; //61, 64, MRA,MLB
-const int MR2 = 5;
-const int ER1 = 8;
-const int ER2 = 7;
+//Left and right may need to be flipped
+const int ML1 = 21;
+const int ML2 = 5; //63,62, MLA, MRB
+const int MR1 = 20; //61, 64, MRA,MLB
+const int MR2 = 6;
+
+//Left and right may need to be flipped
+const int ER1 = 29;
+const int ER2 = 24;
 const int EL1 = 26;
 const int EL2 = 31;
 

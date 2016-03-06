@@ -8,7 +8,7 @@
 #define diagr 5
 
 // IR Pair Pins
-const int TX[6] = {25, 10,   9,  22,  32, 10};
+const int TX[6] = {25, 22,   9,  15,  32, 22};
 const int RX[6] = {A4, A17, A16, A14, A5, A3};
 const int diagHighPower = 23;
 

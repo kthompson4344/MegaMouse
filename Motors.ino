@@ -20,9 +20,15 @@ void setupMotors() {
 }
 
 void setLeftPWM(int value) {
+  if (value > maxSpeed) {
+    value = maxSpeed;
+  }
+  if (value < -maxSpeed) {
+    value = -maxSpeed;
+  }
   if (value >= 0) {
-    analogWrite(ML1, value);
-    digitalWrite(ML2, LOW);
+    digitalWrite(ML1, LOW);
+    analogWrite(ML2, value);
   }
 
   else if (value == 0) {
@@ -30,12 +36,18 @@ void setLeftPWM(int value) {
     digitalWrite(ML2, LOW);
   }
   else {
-    analogWrite(ML2, abs(value));
-    digitalWrite(ML1, LOW);
+    digitalWrite(ML2, LOW);
+    analogWrite(ML1, abs(value));
   }
 }
 
 void setRightPWM(int value) {
+  if (value > maxSpeed) {
+    value = maxSpeed;
+  }
+  if (value < -maxSpeed) {
+    value = -maxSpeed;
+  }
   if (value >= 0) {
     analogWrite(MR1, value);
     digitalWrite(MR2, LOW);

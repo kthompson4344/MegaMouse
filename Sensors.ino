@@ -6,6 +6,8 @@ void setupSensors() {
   }
   pinMode(diagHighPower, OUTPUT);
   digitalWriteFast(diagHighPower, LOW);
+
+  analogReadAveraging(5);
 }
 
 // Runs on a timer every 80 microseconds.  Works like a state machine, goes through groups of sensors individually
@@ -86,7 +88,7 @@ void refreshSensor() {
 }
 
 bool wallFront() {
-  return ( (leftFront + rightFront)/2 > 200);
+  return ( (leftFront + rightFront)/2 > 12);
 }
 
 bool wallLeft() {
