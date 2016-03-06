@@ -19,8 +19,8 @@ int brightness = 15;        // screen brightness
 
 
 //Thresholds for left and right sensors detecting side walls
-#define hasLeftWall 500
-#define hasRightWall 500 //used to be 800
+#define hasLeftWall 400
+#define hasRightWall 400 //used to be 800
 
 //Seperate speeds for explore and solve (not currently implemented)
 int exploreSpeed = 200;
@@ -32,6 +32,8 @@ int rightBaseSpeed = exploreSpeed+30;
 //Setpoint for left and right sensors detecting side walls
 const int rightWallDist = 1665;
 const int leftWallDist = 1565;
+
+const int frontStop = 105;
 
 // PID Constants
 #define straightKp 3
@@ -157,7 +159,7 @@ void loop() {
 //  myDisplay.clear();
 //  myDisplay.setCursor(0);
  // myDisplay.print((rightTicks + leftTicks) / 2);
-  //myDisplay.print(rightMiddleValue);//180 no wall, 820 wall
+//  myDisplay.print(rightMiddleValue);//180 no wall, 820 wall
 //  myDisplay.print(leftMiddleValue);// 300 no wall, 700 wall
 //  myDisplay.print((leftFront + rightFront) / 2);
 //  delay(50);
@@ -355,8 +357,7 @@ void turnAround() {
   if (front) {
     while (rightFront <= frontRightStop || leftFront <= frontLeftStop) {
       if (wallRight() && wallLeft()) {
-        errorP = leftSensor - rightSensor + 100; // 100 is the offset between left and right sensor when mouse in the
-        // middle of cell
+        errorP = 1 * (leftSensor - rightSensor + 100) + 75 * (rightTicks - leftTicks);
       }
       else if (wallRight()) {
         const int wallDist = rightWallDist; //Make this bigger to move closer to the wall
@@ -476,8 +477,8 @@ void turnAround() {
 
 void forwardCorrection() {
   const int oneCellTicks = 327;//327
-  const int noWallRight = 250; // check this value (250)
-  const int noWallLeft = 85; // check this value (450)
+  const int noWallRight = 150; // check this value (250)
+  const int noWallLeft = 150; // check this value (450)
 
   const int pegWallBack = 800; // check this value
   const int pegNoWalls = 1000;
@@ -488,9 +489,9 @@ void forwardCorrection() {
   const int frontWallTicks = 204;
 
   // encoder tick value when we check walls a cell ahead
-  const int readingTicks = 180; // check this value (175)
+  const int readingTicks = 210; // check this value (175)
   // encoder tick value when we switch to next cell's values
-  const int newSideTicks = 230; // check this value (200)
+  const int newSideTicks = 240; // check this value (200)
 
   static bool nextRightValid;
   static bool nextLeftValid;
@@ -529,6 +530,12 @@ void forwardCorrection() {
     }
 
   }
+
+  if ((leftFront + rightFront) / 2 >= frontStop) {
+    rightTicks = oneCellTicks;
+    leftTicks = oneCellTicks;
+  }
+  
   // Next Cell Wall Detection
   if ((rightTicks + leftTicks) / 2 >= readingTicks && !nextCellDecided) {
 
@@ -553,8 +560,8 @@ void forwardCorrection() {
 //    myDisplay.print("lVrV");
     //angle = 0.0;
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
-    angle = 0;//TODO Not sure about this
-    errorP = 2 * (leftSensor - rightSensor + 100) + 75 * (rightTicks - leftTicks); // 100 is the offset between left and right sensor when mouse in the
+    angle = 0.0;//TODO Not sure about this
+    errorP = 1 * (leftSensor - rightSensor + 100) + 75 * (rightTicks - leftTicks); // 100 is the offset between left and right sensor when mouse in the
     // middle of cell
     errorD = errorP - oldErrorP;
     //        getGres();
@@ -563,18 +570,22 @@ void forwardCorrection() {
   }
   else if (leftValid) {
     // Only left wall
-    // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
+    //myDisplay.clear();
+    errorP = 1 * (leftSensor - leftWallDist) + 50 * (rightTicks - leftTicks);
     // TODO - Walls
-    errorP = 75 * (rightTicks - leftTicks) + 20 * (-angle) ;//+ .5 * (leftSensor - leftWallDist);
+    //errorP = 75 * (rightTicks - leftTicks) + 20 * (-angle) ;//+ .5 * (leftSensor - leftWallDist);
     errorD = errorP - oldErrorP;
   }
   else if (rightValid) {
+   // myDisplay.clear();
     // Only right wall
     // TODO - Walls
-    errorP = 75 * (rightTicks - leftTicks) + 20 * (-angle);// - .5 * (rightSensor - rightWallDist);
+    errorP = 1 * (rightSensor - rightWallDist) + 50 * (rightTicks - leftTicks);
+    //errorP = 75 * (rightTicks - leftTicks) + 20 * (-angle);// - .5 * (rightSensor - rightWallDist);
     errorD = errorP - oldErrorP;
   }
   else {
+    //myDisplay.clear();
     static int targetAngle = 0;
     // No walls, use gyro to correct
     //read Gyro? TODO
@@ -588,7 +599,7 @@ void forwardCorrection() {
     //    if (leftSensor > 1800 && !currentWallLeft) {
     //      targetAngle-=2;
     //    }
-    errorP = 75 * (rightTicks - leftTicks);
+    errorP = 50 * (rightTicks - leftTicks) - 15 * (angle);
     //errorP = 20 * (targetAngle - angle);
     //errorP = 150 * (rightTicks - leftTicks); //+ 20 * (targetAngle - angle);
 
@@ -597,61 +608,61 @@ void forwardCorrection() {
   }
 
   //Peg Correction
-#if 0
-  // No walls in next cell or current cell
-  if (!currentWallRight && !nextRightValid && !ticksDecided) {
-    if (rightSensor >= pegNoWalls) {
-      leftTicks = noWallTicks;
-      rightTicks = noWallTicks;
-      ticksDecided = true;
-    }
-  }
-
-  // No walls in next cell, walls in current cell
-  else if (!currentWallRight && !nextRightValid && !ticksDecided) {
-    if (rightSensor <= pegWallBack) {
-      leftTicks = wallBackTicks;
-      rightTicks = wallBackTicks;
-      ticksDecided = true;
-    }
-  }
-
-  // No walls in current cell, wall in next cell
-  else if (!currentWallRight && nextRightValid && !ticksDecided) {
-    if (rightSensor >= pegWallFront) {
-      leftTicks = frontWallTicks;
-      rightTicks = frontWallTicks;
-      ticksDecided = true;
-    }
-  }
-
-  // No walls in next cell or current cell
-  if (!currentWallLeft && !nextLeftValid && !ticksDecided) {
-    if (leftSensor >= pegNoWalls) {
-      leftTicks = noWallTicks;
-      rightTicks = noWallTicks;
-      ticksDecided = true;
-    }
-  }
-
-  // No walls in next cell, walls in current cell
-  else if (currentWallLeft && !nextLeftValid && !ticksDecided) {
-    if (leftSensor <= pegWallBack) {
-      leftTicks = wallBackTicks;
-      rightTicks = wallBackTicks;
-      ticksDecided = true;
-    }
-  }
-
-  // No walls in current cell, wall in next cell
-  else if (!currentWallLeft && nextLeftValid && !ticksDecided) {
-    if (leftSensor >= pegWallFront) {
-      leftTicks = frontWallTicks;
-      rightTicks = frontWallTicks;
-      ticksDecided = true;
-    }
-  }
-#endif
+//#if 0
+//  // No walls in next cell or current cell
+//  if (!currentWallRight && !nextRightValid && !ticksDecided) {
+//    if (rightSensor >= pegNoWalls) {
+//      leftTicks = noWallTicks;
+//      rightTicks = noWallTicks;
+//      ticksDecided = true;
+//    }
+//  }
+//
+//  // No walls in next cell, walls in current cell
+//  else if (!currentWallRight && !nextRightValid && !ticksDecided) {
+//    if (rightSensor <= pegWallBack) {
+//      leftTicks = wallBackTicks;
+//      rightTicks = wallBackTicks;
+//      ticksDecided = true;
+//    }
+//  }
+//
+//  // No walls in current cell, wall in next cell
+//  else if (!currentWallRight && nextRightValid && !ticksDecided) {
+//    if (rightSensor >= pegWallFront) {
+//      leftTicks = frontWallTicks;
+//      rightTicks = frontWallTicks;
+//      ticksDecided = true;
+//    }
+//  }
+//
+//  // No walls in next cell or current cell
+//  if (!currentWallLeft && !nextLeftValid && !ticksDecided) {
+//    if (leftSensor >= pegNoWalls) {
+//      leftTicks = noWallTicks;
+//      rightTicks = noWallTicks;
+//      ticksDecided = true;
+//    }
+//  }
+//
+//  // No walls in next cell, walls in current cell
+//  else if (currentWallLeft && !nextLeftValid && !ticksDecided) {
+//    if (leftSensor <= pegWallBack) {
+//      leftTicks = wallBackTicks;
+//      rightTicks = wallBackTicks;
+//      ticksDecided = true;
+//    }
+//  }
+//
+//  // No walls in current cell, wall in next cell
+//  else if (!currentWallLeft && nextLeftValid && !ticksDecided) {
+//    if (leftSensor >= pegWallFront) {
+//      leftTicks = frontWallTicks;
+//      rightTicks = frontWallTicks;
+//      ticksDecided = true;
+//    }
+//  }
+//#endif
 
   if ((rightTicks + leftTicks) / 2 >= oneCellTicks) {
     endCell = true;
@@ -907,6 +918,7 @@ void turnCorrection() {
   static bool straight = false;
   
   if (i == 0) {
+    angle = 0.0;
     myDisplay.setCursor(0);
     myDisplay.clear();
     if (moveType == TURN_RIGHT) {
@@ -924,7 +936,7 @@ void turnCorrection() {
   }
   if (turn == false) {
     targetAngle = 0;
-    if ((rightFront + leftFront) / 2 >= 99) {//TODO doesn't account for turns without wallFront
+    if ((rightFront + leftFront) / 2 >= frontStop) {//TODO doesn't account for turns without wallFront
       turn = true;
       i = 1;
     }
@@ -951,7 +963,7 @@ void turnCorrection() {
     else {
       targetAngle = -90;
     }
-    if ((rightTicks + leftTicks) / 2 > 60 || (leftFront + rightFront) / 2 > 99) {//TODO make wallfront variable (this number appears in 2 places in this function)
+    if ((rightTicks + leftTicks) / 2 > 60 || (leftFront + rightFront) / 2 > frontStop) {
       continueTurn = false;
     }
   }
@@ -1068,7 +1080,7 @@ void pivotTurnRight90() {
       readGyro();
       errorP = angle - targetAngle;
       errorD = errorP - oldErrorP;
-      totalError = 30 * errorP + 20 * errorD;
+      totalError = 40 * errorP + 20 * errorD;
       setLeftPWM(0 - totalError);
       setRightPWM(0 + totalError);
       oldErrorP = errorP;
@@ -1161,15 +1173,15 @@ void solve() {
   walls[2] = walls_global[2];
   movesDoneAndWallsSet = false;
 
-  movesBuffer[0] = 'f';
-  movesBuffer[1] = 'f';
-  movesBuffer[2] = 'r';
-  movesBuffer[3] = 'r';
-  movesBuffer[4] = 'f';
-  movesBuffer[5] = 'l';
-  movesBuffer[6] = 'l';
-  movesBuffer[7] = 'f';
-  movesBuffer[8] = 'a';
+//  movesBuffer[0] = 'f';
+//  movesBuffer[1] = 'f';
+//  movesBuffer[2] = 'r';
+//  movesBuffer[3] = 'r';
+//  movesBuffer[4] = 'f';
+//  movesBuffer[5] = 'l';
+//  movesBuffer[6] = 'l';
+//  movesBuffer[7] = 'f';
+//  movesBuffer[8] = 'a';
   //    movesBuffer[11] = 'f';
   //    movesBuffer[12] = 'f';
   //    movesBuffer[13] = 'f';
@@ -1210,31 +1222,31 @@ void solve() {
     movesBuffer[31] = 0;
     */
 
-  //  if (!walls[0]) {
-  //    myDisplay.setCursor(0);
-  //    myDisplay.println("left");
-  //    movesBuffer[0] = 'l';
-  //    movesBuffer[1] = 0;
-  //  }
-  //  else if (!walls[1]) {
-  //    myDisplay.setCursor(0);
-  //    myDisplay.println("frwd");
-  //    movesBuffer[0] = 'f';
-  //    movesBuffer[1] = 0;
-  //  }
-  //  else if (!walls[2]) {
-  //    myDisplay.setCursor(0);
-  //    myDisplay.println("rght");
-  //    movesBuffer[0] = 'r';
-  //    movesBuffer[1] = 0;
-  //  }
-  //  else {
-  //    myDisplay.setCursor(0);
-  //    myDisplay.println("arnd");
-  //    movesBuffer[0] = 'a';
-  //    movesBuffer[1] = 'f';
-  //    movesBuffer[2] = 0;
-  //  }
+    if (!walls[0]) {
+      myDisplay.setCursor(0);
+      myDisplay.println("left");
+      movesBuffer[0] = 'l';
+      movesBuffer[1] = 0;
+    }
+    else if (!walls[1]) {
+      myDisplay.setCursor(0);
+      myDisplay.println("frwd");
+      movesBuffer[0] = 'f';
+      movesBuffer[1] = 0;
+    }
+    else if (!walls[2]) {
+      myDisplay.setCursor(0);
+      myDisplay.println("rght");
+      movesBuffer[0] = 'r';
+      movesBuffer[1] = 0;
+    }
+    else {
+      myDisplay.setCursor(0);
+      myDisplay.println("arnd");
+      movesBuffer[0] = 'a';
+      movesBuffer[1] = 'f';
+      movesBuffer[2] = 0;
+    }
 
   movesReady = true;
 }
