@@ -19,8 +19,8 @@ int brightness = 15;        // screen brightness
 
 
 //Thresholds for left and right sensors detecting side walls
-#define hasLeftWall 800
-#define hasRightWall 800
+#define hasLeftWall 500
+#define hasRightWall 500 //used to be 800
 
 //Seperate speeds for explore and solve (not currently implemented)
 int exploreSpeed = 200;
@@ -158,7 +158,7 @@ void loop() {
 //  myDisplay.setCursor(0);
  // myDisplay.print((rightTicks + leftTicks) / 2);
   //myDisplay.print(rightMiddleValue);//180 no wall, 820 wall
-  //myDisplay.print(leftMiddleValue);// 300 no wall, 700 wall
+//  myDisplay.print(leftMiddleValue);// 300 no wall, 700 wall
 //  myDisplay.print((leftFront + rightFront) / 2);
 //  delay(50);
   solve();
@@ -303,9 +303,9 @@ void correction() {
 }
 
 void moveForward() {
-//  myDisplay.setCursor(0);
-//  myDisplay.clear();
-//  myDisplay.print("Fd");
+  myDisplay.setCursor(0);
+  myDisplay.clear();
+  myDisplay.print("Fd");
   if (firstCell) {
     rightTicks = 65;//70
     leftTicks = 65;//70
@@ -475,9 +475,9 @@ void turnAround() {
 }
 
 void forwardCorrection() {
-  const int oneCellTicks = 325;//327
-  const int noWallRight = 300; // check this value (250)
-  const int noWallLeft = 400; // check this value (450)
+  const int oneCellTicks = 327;//327
+  const int noWallRight = 250; // check this value (250)
+  const int noWallLeft = 85; // check this value (450)
 
   const int pegWallBack = 800; // check this value
   const int pegNoWalls = 1000;
@@ -488,7 +488,7 @@ void forwardCorrection() {
   const int frontWallTicks = 204;
 
   // encoder tick value when we check walls a cell ahead
-  const int readingTicks = 170; // check this value (163)
+  const int readingTicks = 180; // check this value (175)
   // encoder tick value when we switch to next cell's values
   const int newSideTicks = 230; // check this value (200)
 
@@ -549,6 +549,8 @@ void forwardCorrection() {
   }
 
   if (leftValid && rightValid) {
+//    myDisplay.setCursor(0);
+//    myDisplay.print("lVrV");
     //angle = 0.0;
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
     angle = 0;//TODO Not sure about this
@@ -560,16 +562,15 @@ void forwardCorrection() {
     //        straightAngle += 2 * (gz) * 0.001;
   }
   else if (leftValid) {
-
     // Only left wall
     // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
-    //read Gyro? TODO
+    // TODO - Walls
     errorP = 75 * (rightTicks - leftTicks) + 20 * (-angle) ;//+ .5 * (leftSensor - leftWallDist);
     errorD = errorP - oldErrorP;
   }
   else if (rightValid) {
     // Only right wall
-    //read Gyro? TODO
+    // TODO - Walls
     errorP = 75 * (rightTicks - leftTicks) + 20 * (-angle);// - .5 * (rightSensor - rightWallDist);
     errorD = errorP - oldErrorP;
   }
@@ -587,8 +588,8 @@ void forwardCorrection() {
     //    if (leftSensor > 1800 && !currentWallLeft) {
     //      targetAngle-=2;
     //    }
-
-    errorP = 20 * (targetAngle - angle);
+    errorP = 75 * (rightTicks - leftTicks);
+    //errorP = 20 * (targetAngle - angle);
     //errorP = 150 * (rightTicks - leftTicks); //+ 20 * (targetAngle - angle);
 
     //    }
