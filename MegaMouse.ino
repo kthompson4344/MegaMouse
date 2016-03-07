@@ -33,8 +33,8 @@ int rightBaseSpeed = exploreSpeed+30;
 const int rightWallDist = 1665;
 const int leftWallDist = 1565;
 
-const int frontStop = 105;
-
+const int frontStop = 105;//105
+float gyroZeroVoltage = 1.542;
 // PID Constants
 #define straightKp 3
 #define turnKp 16
@@ -158,12 +158,13 @@ void loop() {
   //1 cell: 323
 //  myDisplay.clear();
 //  myDisplay.setCursor(0);
+//  myDisplay.print(angle);
  // myDisplay.print((rightTicks + leftTicks) / 2);
 //  myDisplay.print(rightMiddleValue);//180 no wall, 820 wall
 //  myDisplay.print(leftMiddleValue);// 300 no wall, 700 wall
 //  myDisplay.print((leftFront + rightFront) / 2);
 //  delay(50);
-  solve();
+    solve();
 }
 
 //Turns wheels and prints encoder ticks to check difference in speed
@@ -344,6 +345,7 @@ void turnAround() {
   int errorD;
   int totalError;
   bool front;
+  gyroZeroVoltage = 1.56;
   leftBaseSpeed = 200;
   rightBaseSpeed = 200;
   moveType = NO;
@@ -398,6 +400,7 @@ void turnAround() {
         delayMicroseconds(80);
       }
     }
+    
   }
 
   //Turn Around with no wall in front
@@ -460,7 +463,7 @@ void turnAround() {
   if (front) {
     setLeftPWM(-150);
     setRightPWM(-150);
-    delay(350);
+    delay(300);
     for (int i = -150; i < 0; ++i) {
       setLeftPWM(i);
       setRightPWM(i);
@@ -472,7 +475,7 @@ void turnAround() {
     delay(200);
     afterTurnAround = true;
   }
-
+gyroZeroVoltage = 1.542;
 }
 
 void forwardCorrection() {
@@ -571,7 +574,7 @@ void forwardCorrection() {
   else if (leftValid) {
     // Only left wall
     //myDisplay.clear();
-    errorP = 1 * (leftSensor - leftWallDist) + 50 * (rightTicks - leftTicks);
+    errorP = 1 * (leftSensor - leftWallDist) + 75 * (rightTicks - leftTicks) - 10 * angle;
     // TODO - Walls
     //errorP = 75 * (rightTicks - leftTicks) + 20 * (-angle) ;//+ .5 * (leftSensor - leftWallDist);
     errorD = errorP - oldErrorP;
@@ -580,7 +583,7 @@ void forwardCorrection() {
    // myDisplay.clear();
     // Only right wall
     // TODO - Walls
-    errorP = 1 * (rightSensor - rightWallDist) + 50 * (rightTicks - leftTicks);
+    errorP = 1 * (rightSensor - rightWallDist) + 75 * (rightTicks - leftTicks) - 10 * angle;
     //errorP = 75 * (rightTicks - leftTicks) + 20 * (-angle);// - .5 * (rightSensor - rightWallDist);
     errorD = errorP - oldErrorP;
   }
@@ -599,7 +602,7 @@ void forwardCorrection() {
     //    if (leftSensor > 1800 && !currentWallLeft) {
     //      targetAngle-=2;
     //    }
-    errorP = 50 * (rightTicks - leftTicks) - 15 * (angle);
+    errorP = 25 * (rightTicks - leftTicks) - 10 * (angle);
     //errorP = 20 * (targetAngle - angle);
     //errorP = 150 * (rightTicks - leftTicks); //+ 20 * (targetAngle - angle);
 
@@ -919,26 +922,28 @@ void turnCorrection() {
   
   if (i == 0) {
     angle = 0.0;
-    myDisplay.setCursor(0);
-    myDisplay.clear();
+//    myDisplay.setCursor(0);
+//    myDisplay.clear();
     if (moveType == TURN_RIGHT) {
-      myDisplay.print("RGHT");
+//      myDisplay.print("RGHT");
     }
     else {
-      myDisplay.print("LEFT");
-    }
-    if (!wallFront()) {
-      myDisplay.setCursor(0);
-      myDisplay.clear();
-      myDisplay.print("NoWF");
-      turn = true;
+//      myDisplay.print("LEFT");
     }
   }
   if (turn == false) {
-    targetAngle = 0;
-    if ((rightFront + leftFront) / 2 >= frontStop) {//TODO doesn't account for turns without wallFront
-      turn = true;
-      i = 1;
+    if (wallFront()) {
+      targetAngle = 0;// TODO do forward correction during this part?
+      if ((rightFront + leftFront) / 2 >= frontStop) {//TODO doesn't account for turns without wallFront
+        turn = true;
+        i = 1;
+      }
+    }
+    else {
+      if ((leftTicks + rightTicks) / 2 >= 0) {//TODO Find this value, add correction
+        turn = true;
+        i = 1;
+      }
     }
     //turn = true;
   }
@@ -947,7 +952,7 @@ void turnCorrection() {
       targetAngle = curve4[i];
     }
     else {
-      targetAngle = -curve4[i];
+      targetAngle = -curve5[i];
     }
   }
 
@@ -979,7 +984,7 @@ void turnCorrection() {
 //    myDisplay.clear();
 //    myDisplay.print(totalError);
 //    // Update Motor PWM values
-    setLeftPWM(currentLeftPWM);
+    setLeftPWM(currentLeftPWM);//TODO, multiply by .5 and you get a nice pivot turn
     setRightPWM(currentRightPWM);
     
   if (i == 50) {

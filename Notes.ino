@@ -1,12 +1,19 @@
-//Check wallLeft() and wallRight() functions
+//left curve turn overturns greater that right
 
-//fix forwardcorrection
-  //what happens in the period when it switches sensors (is it correcting off anything?)
-  //it seems to not be used sometimes (after turn arounds?)
+//Check wallLeft() and wallRight() functions
 
 //decellerate for turn arounds
 
+//fix 90 degree turn
+
+//fix forwardcorrection
+  //it seems to not be used sometimes (after turn arounds?)
+  //wobble
+  //occasionaly does 2 wall correction on 1 wall
+
 //fix mechanical knocking (weight in back?)
+
+//Search for TODOs
 
 //calibrate sensors
 

@@ -2,8 +2,8 @@
 void readGyro() {
   int gyroPin = A19;               //Gyro is connected to analog pin 19
   float gyroVoltage = 3.3;         //Gyro is running at 3.3V
-  float gyroZeroVoltage = 1.542;   //Gyro is zeroed at 1.55V
-  float gyroSensitivity = .00265;  //4.1mV/deg/sec
+  //float gyroZeroVoltage = 1.542;   //Gyro is zeroed at 1.542V TODO - 1.56 Works well for pivot turns
+  float gyroSensitivity = .00263;  //.00265 (right)
   float rotationThreshold = 4;   //Minimum deg/sec to keep track of - helps with gyro drifting
   //This line converts the 0-1023 signal to 0-3.3V
   float gyroRate = (analogRead(gyroPin) * gyroVoltage) / 4096.0;
