@@ -2,7 +2,7 @@
 
 //Check wallLeft() and wallRight() functions
 
-//decellerate for turn arounds
+//decelleration (uMouse lecture-Mar17.pdf)
 
 //fix 90 degree turn
 

@@ -61,6 +61,13 @@ void setRightPWM(int value) {
     digitalWrite(MR1, LOW);
   }
 }
+
+void stopMotors() {
+  digitalWrite(MR1, HIGH);
+  digitalWrite(MR2, HIGH);
+  digitalWrite(ML1, HIGH);
+  digitalWrite(ML2, HIGH);
+}
 // Right Encoder ISR
 void rightEncoder1() {
   if (digitalReadFast(ER2) == LOW) {

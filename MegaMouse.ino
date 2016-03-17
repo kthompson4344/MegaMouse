@@ -27,18 +27,18 @@ int exploreSpeed = 200;
 int solveSpeed = 200;
 
 int leftBaseSpeed = exploreSpeed;
-int rightBaseSpeed = exploreSpeed+30;
+int rightBaseSpeed = exploreSpeed;
 
 //Setpoint for left and right sensors detecting side walls
-const int rightWallDist = 1665;
-const int leftWallDist = 1565;
+const int rightWallDist = 1500;
+const int leftWallDist = 1250;
 
-const int frontStop = 105;//105
-float gyroZeroVoltage = 1.542;
+const int frontStop = 95;//105
+//float gyroZeroVoltage = 1.55;
 // PID Constants
-#define straightKp 3
+#define straightKp 5
 #define turnKp 16
-#define Kd 10
+#define Kd 0
 
 /* Variables for interface between drive code and algorithm */
 volatile char movesBuffer[256];
@@ -89,7 +89,7 @@ int sensorCounts = 0;
 
 void setup() {
   //Serial.begin(9600);
-  Serial.begin(115200);
+  //Serial.begin(115200);
   //    Serial.begin(115200);
   myDisplay.begin();
   // set the brightness of the display:
@@ -148,7 +148,8 @@ void setup() {
   //Runs every 1ms and controls mouse movements
   correctionTimer.priority(255);
   correctionTimer.begin(correction, 1000);
-
+//  setLeftPWM(0);
+//  setRightPWM(0);
 }
 
 void loop() {
@@ -162,7 +163,10 @@ void loop() {
  // myDisplay.print((rightTicks + leftTicks) / 2);
 //  myDisplay.print(rightMiddleValue);//180 no wall, 820 wall
 //  myDisplay.print(leftMiddleValue);// 300 no wall, 700 wall
+//    myDisplay.print(rightSensor);
 //  myDisplay.print((leftFront + rightFront) / 2);
+//  printSensors();
+//myDisplay.print(analogRead(A19) - analogRead(A13));
 //  delay(50);
     solve();
 }
@@ -243,7 +247,7 @@ void correction() {
             goalSpeed = solveSpeed;
         }
         else {
-          goalSpeed = (int)exploreSpeed * (float)forwardCount;
+          goalSpeed = (int)exploreSpeed * (int)forwardCount;
           if (goalSpeed < exploreSpeed)
             goalSpeed = exploreSpeed;
           if (goalSpeed > maxSpeed)
@@ -310,8 +314,8 @@ void moveForward() {
   myDisplay.clear();
   myDisplay.print("Fd");
   if (firstCell) {
-    rightTicks = 65;//70
-    leftTicks = 65;//70
+    rightTicks = 70;//70
+    leftTicks =70;//70
     firstCell = false;
     leftBaseSpeed = 0;
     rightBaseSpeed = 0;
@@ -321,8 +325,8 @@ void moveForward() {
     leftBaseSpeed = 0;
     rightBaseSpeed = 0;
     accelerate = true;
-    rightTicks = 100;
-    leftTicks = 100;
+    rightTicks = 140;
+    leftTicks = 140;
     afterTurnAround = false;
   }
   else {
@@ -336,30 +340,50 @@ void moveForward() {
 }
 
 void turnAround() {
-  const int frontLeftStop = 500;
-  const int frontRightStop = 500;
+  const int frontLeftStop = 800;
+  const int frontRightStop = 800;
   bool leftStop = false;
   bool rightStop = false;
+  bool stop = false;
   int tickCount = 180;
   int errorP;
   int errorD;
   int totalError;
   bool front;
-  gyroZeroVoltage = 1.56;
+//  gyroZeroVoltage = 1.56;
   leftBaseSpeed = 200;
   rightBaseSpeed = 200;
   moveType = NO;
   if (wallFront()) {
     front = true;
+    afterTurnAround = true;
   }
   else {
     afterTurnAround = true;
-    front = false;
+    front = true;
   }
   if (front) {
-    while (rightFront <= frontRightStop || leftFront <= frontLeftStop) {
+    while (1) {
+      const int tickValue = 160;
+      if ((rightTicks + leftTicks) / 2 < tickValue && stop == false) {
+        stop = true;
+      }
+      if (stop == true) {
+        if (rightBaseSpeed > 30) {
+          leftBaseSpeed--;
+          rightBaseSpeed--;
+        }
+        else {
+          leftBaseSpeed = 0;
+          rightBaseSpeed = 0;
+          setLeftPWM(20);
+          setRightPWM(20);
+          delay(200);
+          break;
+        }
+      }
       if (wallRight() && wallLeft()) {
-        errorP = 1 * (leftSensor - rightSensor + 100) + 75 * (rightTicks - leftTicks);
+        errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist));// + 75 * (rightTicks - leftTicks);
       }
       else if (wallRight()) {
         const int wallDist = rightWallDist; //Make this bigger to move closer to the wall
@@ -386,13 +410,19 @@ void turnAround() {
       totalError = straightKp * errorP + Kd * errorD;
 
       // Calculate PWM based on Error
-      currentLeftPWM = leftBaseSpeed + totalError / 124;
-      currentRightPWM = rightBaseSpeed - totalError / 124;
+      currentLeftPWM = leftBaseSpeed + (totalError / 124);
+      currentRightPWM = rightBaseSpeed - (totalError / 124);
 
+      if (currentLeftPWM < 0) {
+        currentLeftPWM = 0;
+      }
+      if (currentRightPWM < 0) {
+        currentRightPWM = 0;
+      }
       // Update Motor PWM values
       setLeftPWM(currentLeftPWM);
       setRightPWM(currentRightPWM);
-
+    
       //TODO (this is a hack and shouldn't be here, but it makes it work)
       haveSensorReading = false;
       while (!haveSensorReading) {
@@ -405,77 +435,75 @@ void turnAround() {
 
   //Turn Around with no wall in front
   else {
-    const int tickValue = 100;
-    while ((rightTicks + leftTicks) / 2 < tickValue) {
-      if (wallRight() && wallLeft()) {
-        errorP = leftSensor - rightSensor + 100; // 100 is the offset between left and right sensor when mouse in the
-        // middle of cell
-      }
-      else if (wallRight()) {
-        // Only right wall
-        //read Gyro? TODO
-        errorP = 20 * (angle) - .5 * (rightSensor - rightWallDist);
-        errorD = errorP;
-      }
-      else if (wallLeft()) {
-        // Only left wall
-        // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
-        //read Gyro? TODO
-        errorP = 20 * (angle) + .5 * (leftSensor - leftWallDist);
-        errorD = errorP;
-      }
-      else {
-        //read Gyro? TODO
-        errorP = 20 * (angle);
-        errorD = errorP;
-      }
-      errorD = errorP;
-      totalError = straightKp * errorP + Kd * errorD;
-
-      // Calculate PWM based on Error
-      currentLeftPWM = leftBaseSpeed + totalError / 124;
-      currentRightPWM = rightBaseSpeed - totalError / 124;
-
-      // Update Motor PWM values
-      setLeftPWM(currentLeftPWM);
-      setRightPWM(currentRightPWM);
-
-      //TODO (this is a hack and shouldn't be here, but it makes it work)
-      haveSensorReading = false;
-      while (!haveSensorReading) {
-        readSensors();
-        delayMicroseconds(80);
-      }
-    }
+//    const int tickValue = 100;
+//    while ((rightTicks + leftTicks) / 2 < tickValue) {
+//      if (wallRight() && wallLeft()) {
+//        errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)); // 100 is the offset between left and right sensor when mouse in the
+//        // middle of cell
+//      }
+//      else if (wallRight()) {
+//        // Only right wall
+//        //read Gyro? TODO
+//        errorP = 20 * (angle) - .5 * (rightSensor - rightWallDist);
+//        errorD = errorP;
+//      }
+//      else if (wallLeft()) {
+//        // Only left wall
+//        // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
+//        //read Gyro? TODO
+//        errorP = 20 * (angle) + .5 * (leftSensor - leftWallDist);
+//        errorD = errorP;
+//      }
+//      else {
+//        //read Gyro? TODO
+//        errorP = 20 * (angle);
+//        errorD = errorP;
+//      }
+//      errorD = errorP;
+//      totalError = straightKp * errorP + Kd * errorD;
+//
+//      // Calculate PWM based on Error
+//      currentLeftPWM = leftBaseSpeed + totalError / 124;
+//      currentRightPWM = rightBaseSpeed - totalError / 124;
+//      // Update Motor PWM values
+//      setLeftPWM(currentLeftPWM);
+//      setRightPWM(currentRightPWM);
+//
+//      //TODO (this is a hack and shouldn't be here, but it makes it work)
+//      haveSensorReading = false;
+//      while (!haveSensorReading) {
+//        readSensors();
+//        delayMicroseconds(80);
+//      }
+//    }
   }
-  setRightPWM(0);
-  setLeftPWM(0);
-  delay(200);
+  rightTicks = 0;
+  leftTicks = 0;
+//  delay(5000);
   leftStop = false;
   rightStop = false;
-
+  stop = false;
+  leftBaseSpeed = 200;
+  rightBaseSpeed = 200;
   pivotTurnRight90();
-  delay(300);
   pivotTurnRight90();
 
   angle = 0.0;
-  delay(200);
-  if (front) {
-    setLeftPWM(-150);
-    setRightPWM(-150);
-    delay(300);
-    for (int i = -150; i < 0; ++i) {
-      setLeftPWM(i);
-      setRightPWM(i);
-    }
-    delay(200);
-    firstCell = true;
-  }
-  else {
-    delay(200);
-    afterTurnAround = true;
-  }
-gyroZeroVoltage = 1.542;
+//  if (front) {
+//    setLeftPWM(-150);
+//    setRightPWM(-150);
+//    delay(300);
+//    for (int i = -150; i < 0; ++i) {
+//      setLeftPWM(i);
+//      setRightPWM(i);
+//    }
+//    delay(200);
+//    firstCell = true;
+//  }
+//  else {
+//    delay(200);
+//  }
+//gyroZeroVoltage = 1.55;
 }
 
 void forwardCorrection() {
@@ -519,7 +547,6 @@ void forwardCorrection() {
       rightBaseSpeed = 30;
     }
     count++;
-
     if (count % 1 == 0) {
       if (leftBaseSpeed < goalSpeed) {
         leftBaseSpeed++;
@@ -564,7 +591,7 @@ void forwardCorrection() {
     //angle = 0.0;
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
     angle = 0.0;//TODO Not sure about this
-    errorP = 1 * (leftSensor - rightSensor + 100) + 75 * (rightTicks - leftTicks); // 100 is the offset between left and right sensor when mouse in the
+    errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)); //+ 50 * (rightTicks - leftTicks); // 100 is the offset between left and right sensor when mouse in the
     // middle of cell
     errorD = errorP - oldErrorP;
     //        getGres();
@@ -934,9 +961,9 @@ void turnCorrection() {
   if (turn == false) {
     if (wallFront()) {
       targetAngle = 0;// TODO do forward correction during this part?
-      if ((rightFront + leftFront) / 2 >= frontStop) {//TODO doesn't account for turns without wallFront
+      if ((rightFront + leftFront) / 2 > frontStop) {
         turn = true;
-        i = 1;
+        i = 0;
       }
     }
     else {
@@ -968,7 +995,7 @@ void turnCorrection() {
     else {
       targetAngle = -90;
     }
-    if ((rightTicks + leftTicks) / 2 > 60 || (leftFront + rightFront) / 2 > frontStop) {
+    if ((rightTicks + leftTicks) / 2 > 60  || (leftFront + rightFront) / 2 > frontStop) {
       continueTurn = false;
     }
   }
@@ -1011,7 +1038,6 @@ void turnCorrection() {
     straight = false;
     continueTurn = true;
   }
-
 }
 
 void pivotTurnRight() {
@@ -1063,13 +1089,15 @@ void pivotTurnRight90() {
   // const int targetDegrees = 86
   float initialZ;
   long count = 0;
+  int i = 0;
   //    rightTicks = 0;
   //    leftTicks = 0;
   //    delay(200);
 
   //    while (rightTicks > -90 || leftTicks < 90) {
   //    }
-
+  leftTicks = 0;
+  rightTicks = 0;
   angle = 0;
   degreesTraveled = 0;
   count = micros();
@@ -1077,26 +1105,52 @@ void pivotTurnRight90() {
     uint32_t deltat = micros() - count;
     if (deltat > 1000) {
       if (targetAngle < 90) {
-        targetAngle += 0.25;
+        targetAngle = curve4[i];
+        i++;
       }
       else {
         finishedCount++;
       }
       readGyro();
-      errorP = angle - targetAngle;
+      errorP = angle - targetAngle;// + 5 * (leftTicks + rightTicks);
       errorD = errorP - oldErrorP;
       totalError = 40 * errorP + 20 * errorD;
-      setLeftPWM(0 - totalError);
-      setRightPWM(0 + totalError);
+      currentLeftPWM = -totalError;
+      currentRightPWM = totalError;
+      setLeftPWM(currentLeftPWM);
+      setRightPWM(currentRightPWM);
       oldErrorP = errorP;
       count = micros();    
-      if (finishedCount > 100) {
+      if (finishedCount > 5) {
+//        while (currentLeftPWM > 0 && currentRightPWM > 0) {
+//          if (currentLeftPWM > 0) {
+//            setLeftPWM(currentLeftPWM--);
+//          }
+//          if (currentRightPWM < 0) {
+//            setRightPWM(currentRightPWM++);
+//          }
+//        }
+        //delay(100);
         break;
-        setLeftPWM(0);
-        setRightPWM(0);
       }
     }
+    
   }
+  while (currentLeftPWM > 0 && currentRightPWM < 0) {
+    if (currentLeftPWM > 0) {
+      currentLeftPWM--;
+      setLeftPWM(currentLeftPWM);
+    }
+    if (currentRightPWM < 0) {
+      currentRightPWM++;
+      setRightPWM(currentRightPWM);
+    }
+    delay(1);
+  }
+
+  leftTicks = 0;
+  rightTicks = 0;
+  delay(200);
   //    // Needs to deccelerate for the motors to stop correctly
 //  for (int i = turnSpeed; i >= 0; --i) {
 //    setLeftPWM(i);

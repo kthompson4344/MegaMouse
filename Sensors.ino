@@ -98,3 +98,13 @@ bool wallLeft() {
 bool wallRight() {
   return (rightSensor > hasRightWall);
 }
+
+void printSensors() {
+  Serial.print(leftFront);Serial.print(" ");
+  Serial.print(leftMiddleValue);Serial.print(" ");
+  Serial.print(leftSensor);Serial.print(" ");
+  Serial.print(rightSensor);Serial.print(" ");
+  Serial.print(rightMiddleValue);Serial.print(" ");
+  Serial.println(rightFront);
+}
+
