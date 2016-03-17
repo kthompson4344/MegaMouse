@@ -13,6 +13,7 @@ void setupSensors() {
 // Runs on a timer every 80 microseconds.  Works like a state machine, goes through groups of sensors individually
 // and then updates their values.
 void readSensors() {
+  float leftLog;
   static int leftFrontAmbient = 0;
   static int rightFrontAmbient = 0;
   static int leftSensorAmbient = 0;
@@ -37,6 +38,8 @@ void readSensors() {
 
       case 2: // Read left front sensor, then turn it off.
         leftFront = analogRead(RX[lf]) - leftFrontAmbient;
+        leftLog = 1/log(leftFront);
+        leftFront = 1/(48.59*(leftLog*leftLog) - 11.978*leftLog + .8614);
         digitalWriteFast(TX[lf],LOW);
         break;
 
@@ -46,6 +49,7 @@ void readSensors() {
 
       case 4: // Read right front sensor, then turn it off.
         rightFront = analogRead(RX[rf]) - rightFrontAmbient;
+        rightFront = log(rightFront);
         digitalWriteFast(TX[rf],LOW);
         break;
 
@@ -88,7 +92,7 @@ void refreshSensor() {
 }
 
 bool wallFront() {
-  return ( (leftFront + rightFront)/2 > 12);
+  return ( (leftFront + rightFront)/2 > 1.3);
 }
 
 bool wallLeft() {
@@ -100,11 +104,11 @@ bool wallRight() {
 }
 
 void printSensors() {
-  Serial.print(leftFront);Serial.print(" ");
+  Serial.print(leftFront,4);Serial.print(" ");
   Serial.print(leftMiddleValue);Serial.print(" ");
   Serial.print(leftSensor);Serial.print(" ");
   Serial.print(rightSensor);Serial.print(" ");
   Serial.print(rightMiddleValue);Serial.print(" ");
-  Serial.println(rightFront);
+  Serial.println(rightFront,4);
 }
 

@@ -16,5 +16,5 @@ volatile int leftSensor;
 volatile int rightSensor;
 volatile int rightMiddleValue;
 volatile int leftMiddleValue;
-volatile int leftFront;
-volatile int rightFront;
+volatile float leftFront;
+volatile float rightFront;

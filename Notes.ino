@@ -1,21 +1,20 @@
-//left curve turn overturns greater that right
+//Better turnAround: the pivotTurnRight90 creates an offset
+//                   the pivotTurnRight90 sometimes freezes at the end of the turn (add a timeout?)
+//                   wall correction should be added
 
 //Check wallLeft() and wallRight() functions
 
 //decelleration (uMouse lecture-Mar17.pdf)
 
-//fix 90 degree turn
-
 //fix forwardcorrection
   //it seems to not be used sometimes (after turn arounds?)
   //wobble
   //occasionaly does 2 wall correction on 1 wall
-
-//fix mechanical knocking (weight in back?)
+  //check diagonal sensor values
 
 //Search for TODOs
 
-//calibrate sensors
+//calibrate sensors (glue)
 
 //Axle allignment:/peg correction
 //http://micromouseusa.com/?p=828

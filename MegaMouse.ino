@@ -33,10 +33,10 @@ int rightBaseSpeed = exploreSpeed;
 const int rightWallDist = 1500;
 const int leftWallDist = 1250;
 
-const int frontStop = 95;//105
+const float frontStop = 3.3;//95
 //float gyroZeroVoltage = 1.55;
 // PID Constants
-#define straightKp 5
+#define straightKp 6
 #define turnKp 16
 #define Kd 0
 
@@ -164,8 +164,8 @@ void loop() {
 //  myDisplay.print(rightMiddleValue);//180 no wall, 820 wall
 //  myDisplay.print(leftMiddleValue);// 300 no wall, 700 wall
 //    myDisplay.print(rightSensor);
-//  myDisplay.print((leftFront + rightFront) / 2);
-//  printSensors();
+//  Serial.println((leftFront + rightFront) / 2);
+//  Serial.println(leftFront-rightFront);
 //myDisplay.print(analogRead(A19) - analogRead(A13));
 //  delay(50);
     solve();
@@ -340,10 +340,6 @@ void moveForward() {
 }
 
 void turnAround() {
-  const int frontLeftStop = 800;
-  const int frontRightStop = 800;
-  bool leftStop = false;
-  bool rightStop = false;
   bool stop = false;
   int tickCount = 180;
   int errorP;
@@ -364,8 +360,8 @@ void turnAround() {
   }
   if (front) {
     while (1) {
-      const int tickValue = 160;
-      if ((rightTicks + leftTicks) / 2 < tickValue && stop == false) {
+      const float frontValue = 4.5;
+      if ((leftFront + rightFront) / 2 > frontValue && stop == false) {
         stop = true;
       }
       if (stop == true) {
@@ -435,53 +431,68 @@ void turnAround() {
 
   //Turn Around with no wall in front
   else {
-//    const int tickValue = 100;
-//    while ((rightTicks + leftTicks) / 2 < tickValue) {
-//      if (wallRight() && wallLeft()) {
-//        errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)); // 100 is the offset between left and right sensor when mouse in the
-//        // middle of cell
-//      }
-//      else if (wallRight()) {
-//        // Only right wall
-//        //read Gyro? TODO
-//        errorP = 20 * (angle) - .5 * (rightSensor - rightWallDist);
-//        errorD = errorP;
-//      }
-//      else if (wallLeft()) {
-//        // Only left wall
-//        // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
-//        //read Gyro? TODO
-//        errorP = 20 * (angle) + .5 * (leftSensor - leftWallDist);
-//        errorD = errorP;
-//      }
-//      else {
-//        //read Gyro? TODO
-//        errorP = 20 * (angle);
-//        errorD = errorP;
-//      }
-//      errorD = errorP;
-//      totalError = straightKp * errorP + Kd * errorD;
-//
-//      // Calculate PWM based on Error
-//      currentLeftPWM = leftBaseSpeed + totalError / 124;
-//      currentRightPWM = rightBaseSpeed - totalError / 124;
-//      // Update Motor PWM values
-//      setLeftPWM(currentLeftPWM);
-//      setRightPWM(currentRightPWM);
-//
-//      //TODO (this is a hack and shouldn't be here, but it makes it work)
-//      haveSensorReading = false;
-//      while (!haveSensorReading) {
-//        readSensors();
-//        delayMicroseconds(80);
-//      }
-//    }
+    while (1) {
+      const int tickValue = 160;
+      if ((rightTicks + leftTicks) / 2 > tickValue && stop == false) {
+        stop = true;
+      }
+      if (stop == true) {
+        if (rightBaseSpeed > 30) {
+          leftBaseSpeed--;
+          rightBaseSpeed--;
+        }
+        else {
+          leftBaseSpeed = 0;
+          rightBaseSpeed = 0;
+          setLeftPWM(20);
+          setRightPWM(20);
+          delay(200);
+          break;
+        }
+      }
+      if (wallRight() && wallLeft()) {
+        errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)); // 100 is the offset between left and right sensor when mouse in the
+        // middle of cell
+      }
+      else if (wallRight()) {
+        // Only right wall
+        //read Gyro? TODO
+        errorP = 20 * (angle) - .5 * (rightSensor - rightWallDist);
+        errorD = errorP;
+      }
+      else if (wallLeft()) {
+        // Only left wall
+        // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
+        //read Gyro? TODO
+        errorP = 20 * (angle) + .5 * (leftSensor - leftWallDist);
+        errorD = errorP;
+      }
+      else {
+        //read Gyro? TODO
+        errorP = 20 * (angle);
+        errorD = errorP;
+      }
+      errorD = errorP;
+      totalError = straightKp * errorP + Kd * errorD;
+
+      // Calculate PWM based on Error
+      currentLeftPWM = leftBaseSpeed + totalError / 124;
+      currentRightPWM = rightBaseSpeed - totalError / 124;
+      // Update Motor PWM values
+      setLeftPWM(currentLeftPWM);
+      setRightPWM(currentRightPWM);
+
+      //TODO (this is a hack and shouldn't be here, but it makes it work)
+      haveSensorReading = false;
+      while (!haveSensorReading) {
+        readSensors();
+        delayMicroseconds(80);
+      }
+    }
   }
   rightTicks = 0;
   leftTicks = 0;
 //  delay(5000);
-  leftStop = false;
-  rightStop = false;
   stop = false;
   leftBaseSpeed = 200;
   rightBaseSpeed = 200;
@@ -946,6 +957,7 @@ void turnCorrection() {
   static bool continueTurn = true;
   static bool turn = false;
   static bool straight = false;
+  static bool wallInFront = false;
   
   if (i == 0) {
     angle = 0.0;
@@ -960,6 +972,7 @@ void turnCorrection() {
   }
   if (turn == false) {
     if (wallFront()) {
+      wallInFront = true;
       targetAngle = 0;// TODO do forward correction during this part?
       if ((rightFront + leftFront) / 2 > frontStop) {
         turn = true;
@@ -1000,8 +1013,12 @@ void turnCorrection() {
     }
   }
 
-
-  errorP = targetAngle - angle;
+  if (wallInFront == true && turn == false) {
+    errorP = 2*(rightFront - leftFront);
+  }
+  else {
+    errorP = targetAngle - angle;
+  }
   errorD = errorP - oldErrorP;
   totalError = 18 * errorP + 10 * errorD;
   // Calculate PWM based on Error
@@ -1037,6 +1054,7 @@ void turnCorrection() {
     turn = false;
     straight = false;
     continueTurn = true;
+    wallInFront = false;
   }
 }
 
@@ -1101,7 +1119,7 @@ void pivotTurnRight90() {
   angle = 0;
   degreesTraveled = 0;
   count = micros();
-  while (targetAngle <= targetDegrees) {
+  while (targetAngle < targetDegrees) {
     uint32_t deltat = micros() - count;
     if (deltat > 1000) {
       if (targetAngle < 90) {
@@ -1117,7 +1135,7 @@ void pivotTurnRight90() {
       totalError = 40 * errorP + 20 * errorD;
       currentLeftPWM = -totalError;
       currentRightPWM = totalError;
-      setLeftPWM(currentLeftPWM);
+      setLeftPWM(currentLeftPWM + abs(rightTicks) - leftTicks);
       setRightPWM(currentRightPWM);
       oldErrorP = errorP;
       count = micros();    
