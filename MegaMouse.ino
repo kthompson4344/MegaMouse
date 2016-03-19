@@ -29,6 +29,9 @@ int solveSpeed = 200;
 int leftBaseSpeed = exploreSpeed;
 int rightBaseSpeed = exploreSpeed;
 
+float leftSpeed;
+float rightSpeed;
+
 //Setpoint for left and right sensors detecting side walls
 const int rightWallDist = 1500;
 const int leftWallDist = 1250;
@@ -36,7 +39,7 @@ const int leftWallDist = 1250;
 const float frontStop = 3.3;//95
 //float gyroZeroVoltage = 1.55;
 // PID Constants
-#define straightKp 6
+#define straightKp 5
 #define turnKp 16
 #define Kd 0
 
@@ -167,25 +170,22 @@ void loop() {
 //  Serial.println((leftFront + rightFront) / 2);
 //  Serial.println(leftFront-rightFront);
 //myDisplay.print(analogRead(A19) - analogRead(A13));
-//  delay(50);
     solve();
 }
 
 //Turns wheels and prints encoder ticks to check difference in speed
-void wheelCalib() {
-  //  correctionTimer.end();
-  //  sensorTimer.end();
-  //  refreshSensorTimer.end();
-  setLeftPWM(240);
-  setRightPWM(240);
-  while (1) {
-    delay(1000);
-    Serial.print(leftTicks);
-    Serial.print(" ");
-    Serial.println(rightTicks);
-    leftTicks = 0;
-    rightTicks = 0;
+void getSpeed() {
+  const int timeConst = 10;//ms
+  static int count = 0;
+  // 1.82mm/tick (16count TODO double check)
+  if (count >= timeConst) {
+    leftSpeed = (leftTicks - prevLeftTicks) * 1.82 / timeConst * 1000;
+    rightSpeed= (rightTicks- prevRightTicks)* 1.82 / timeConst * 1000;
+    prevLeftTicks = leftTicks;
+    prevRightTicks = rightTicks;
+    count = 0;
   }
+  count++;
 }
 
 //1ms timer
@@ -1135,7 +1135,7 @@ void pivotTurnRight90() {
       totalError = 40 * errorP + 20 * errorD;
       currentLeftPWM = -totalError;
       currentRightPWM = totalError;
-      setLeftPWM(currentLeftPWM + abs(rightTicks) - leftTicks);
+      setLeftPWM(currentLeftPWM + (int)(.5*(abs(rightTicks) - leftTicks)));
       setRightPWM(currentRightPWM);
       oldErrorP = errorP;
       count = micros();    
@@ -1165,7 +1165,6 @@ void pivotTurnRight90() {
     }
     delay(1);
   }
-
   leftTicks = 0;
   rightTicks = 0;
   delay(200);

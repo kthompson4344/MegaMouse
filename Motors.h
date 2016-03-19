@@ -24,3 +24,6 @@ int currentLeftPWM = 0;
 // Encoder Ticks
 volatile int rightTicks = 0;
 volatile int leftTicks = 0;
+
+int prevRightTicks;
+int prevLeftTicks;
