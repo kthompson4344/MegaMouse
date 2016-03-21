@@ -11,6 +11,9 @@ void readGyro() {
   gyroRate -= gyroZeroVoltage;
   //Serial.println(gyroRate);
   //This line divides the voltage we found by the gyro's sensitivity
+  if (moveType == TURN_RIGHT) {
+//    gyroSensitivity = .00265;//TODO Not sure about this
+  }
   gyroRate /= gyroSensitivity;
 
   //Ignore the gyro if our angular velocity does not meet our threshold
