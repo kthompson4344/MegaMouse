@@ -37,8 +37,8 @@ void readSensors() {
         break;
 
       case 2: // Read left front sensor, then turn it off.
-        leftFront = analogRead(RX[lf]) - leftFrontAmbient;
-        leftLog = 1/log(leftFront);
+        leftFrontRaw = analogRead(RX[lf]) - leftFrontAmbient;
+        leftLog = 1/log(leftFrontRaw);
         leftFront = 1/(48.59*(leftLog*leftLog) - 11.978*leftLog + .8614);
         digitalWriteFast(TX[lf],LOW);
         break;
@@ -48,8 +48,8 @@ void readSensors() {
         break;
 
       case 4: // Read right front sensor, then turn it off.
-        rightFront = analogRead(RX[rf]) - rightFrontAmbient;
-        rightFront = log(rightFront);
+        rightFrontRaw = analogRead(RX[rf]) - rightFrontAmbient;
+        rightFront = log(rightFrontRaw);
         digitalWriteFast(TX[rf],LOW);
         break;
 
@@ -92,8 +92,9 @@ void refreshSensor() {
 }
 
 bool wallFront() {
-//  return ( (leftFront + rightFront)/2 > 1.3);
-  return (leftFront > 1 && rightFront > 1.1);
+  float value = 18.0;
+  return ( (leftFrontRaw + rightFrontRaw)/2.0 >= value);
+//  return (leftFrontRaw > value && rightFrontRaw > value);
 }
 
 bool wallLeft() {

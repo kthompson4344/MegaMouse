@@ -18,3 +18,5 @@ volatile int rightMiddleValue;
 volatile int leftMiddleValue;
 volatile float leftFront;
 volatile float rightFront;
+volatile int leftFrontRaw;
+volatile int rightFrontRaw;
