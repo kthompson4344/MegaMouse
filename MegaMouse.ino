@@ -19,8 +19,8 @@ int brightness = 15;        // screen brightness
 
 
 //Thresholds for left and right sensors detecting side walls
-#define hasLeftWall 600
-#define hasRightWall 600 //used to be 800
+#define hasLeftWall 300
+#define hasRightWall 300 //used to be 800
 
 //Seperate speeds for explore and solve (mm/s) (not currently implemented)
 int exploreSpeed = 400;
@@ -39,9 +39,9 @@ const int leftWallDist = 1200;
 const float frontStop = 3.8;//95
 //float gyroZeroVoltage = 1.55;
 // PID Constants
-#define straightKp 6
+#define straightKp 10
 #define turnKp 16
-#define Kd 6
+#define Kd 10
 
 /* Variables for interface between drive code and algorithm */
 volatile char movesBuffer[256];
@@ -153,6 +153,8 @@ void setup() {
   correctionTimer.begin(correction, 1000);
   //  setLeftPWM(0);
   //  setRightPWM(0);
+  rightTicks = 0;
+  leftTicks = 0;
 }
 
 void loop() {
@@ -160,19 +162,26 @@ void loop() {
   //algo.solve();
   //start to 1st cell: 260
   //1 cell: 323
-  //    myDisplay.clear();
-  //    myDisplay.setCursor(0);
+//      myDisplay.clear();
+//      myDisplay.setCursor(0);
+//      myDisplay.print((rightTicks + leftTicks) / 2);
   //   myDisplay.print((rightTicks + leftTicks) / 2);
   //  myDisplay.print(rightMiddleValue);//180 no wall, 820 wall
   //  myDisplay.print(leftMiddleValue);// 300 no wall, 700 wall
   //      myDisplay.print(leftFrontRaw);
   //    myDisplay.print((leftFrontRaw + rightFrontRaw) / 2);
-  //myDisplay.print(rightFront);
+//  myDisplay.print(rightFront);
   //    myDisplay.print(leftFront-rightFront);
   //myDisplay.print(analogRead(A19) - analogRead(A13));
-  //  delay(50);
+//    delay(50);
   solve();
   //algo.solve();
+//  setLeftPWM(int(.5*(2000 - leftFrontRaw)));
+//  setRightPWM(int(.5*(2000-rightFrontRaw)));
+//  delay(1);
+//setLeftPWM(-200);
+//setRightPWM(200);
+//delay(5);
 }
 
 void getSpeed() {
@@ -205,7 +214,7 @@ void getSpeed() {
       prevRightTicks = rightTicks;
       count = 0;
     }
-    if (leftBaseSpeed < 150 && goalSpeed > 0 && firstCell) {
+    if (leftBaseSpeed < 100 && goalSpeed > 0) {
       leftBaseSpeed++;
       rightBaseSpeed++;
     }
@@ -552,23 +561,25 @@ void turnAround() {
   leftBaseSpeed = 200;//TODO
   rightBaseSpeed = 200;
   moveType = NO;
+  myDisplay.clear();
+  myDisplay.setCursor(0);
   pivotTurnRight90();
-
-  //  myDisplay.clear();
-  //  myDisplay.setCursor(0);
-  //  myDisplay.print(leftFrontRaw);
-  //  delay(1000);
-  //Insert front wall correction here
-  //  const int wallStop = 2300;
-  //  for (int i = 0; i < 2000; i++) {
-  //    refreshSensor();
-  //    setLeftPWM(0.1 * round(wallStop - leftFrontRaw));
-  //    setRightPWM(0.1 * round(wallStop - rightFrontRaw));
-  //    delayMicroseconds(540);
-  //  }
-  //  setLeftPWM(0);
-  //  setRightPWM(0);
-
+  myDisplay.print("Done");
+  int i = 0;
+  if (wallFront()) {
+    while (i < 200) {
+      //TODO (this is a hack and shouldn't be here, but it makes it work)
+        haveSensorReading = false;
+        while (!haveSensorReading) {
+          readSensors();
+          delayMicroseconds(80);
+        }
+        setLeftPWM(int(.5*(2500 - leftFrontRaw)));
+        setRightPWM(int(.5*(2500 -rightFrontRaw)));
+        i++;
+        delay(1);
+    }
+  }
   pivotTurnRight90();
 
   //Insert side wall correction here
@@ -594,8 +605,8 @@ void turnAround() {
 
 void forwardCorrection() {
   const int oneCellTicks = 327;//327
-  const int noWallRight = 150; // check this value (250)
-  const int noWallLeft = 150; // check this value (450)
+  const int noWallRight = 400; // check this value (250)
+  const int noWallLeft =  450; // check this value (450)
 
   const int pegWallBack = 800; // check this value
   const int pegNoWalls = 1000;
@@ -629,10 +640,10 @@ void forwardCorrection() {
 
   //  if (accelerate) {
 
-  if (leftBaseSpeed == 0) {
-    leftBaseSpeed = 30;
-    rightBaseSpeed = 30;
-  }
+//  if (leftBaseSpeed == 0) {
+//    leftBaseSpeed = 30;
+//    rightBaseSpeed = 30;
+//  }
   //  }
 
   //  if ((leftFront + rightFront) / 2 >= frontStop) {
@@ -641,10 +652,15 @@ void forwardCorrection() {
   //    prevRightTicks -= oneCellTicks;
   //    prevLeftTicks -= oneCellTicks;
   //  }
-
+  if (rightSensor < 450) { 
+    rightValid = false;
+  }
+  if (leftSensor < 300) {
+    leftValid = false;
+  }
   // Next Cell Wall Detection
   if ((rightTicks + leftTicks) / 2 >= readingTicks && !nextCellDecided) {
-
+    angle = 0;
     nextRightValid = rightMiddleValue > noWallRight;
     nextLeftValid = leftMiddleValue > noWallLeft;
     nextCellDecided = true;
@@ -673,7 +689,7 @@ void forwardCorrection() {
     //angle = 0.0;
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
     //    angle = 0.0;//TODO Not sure about this
-    errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 50 * (rightTicks - leftTicks) + 3 * angle; // 100 is the offset between left and right sensor when mouse in the
+    errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 75 * (rightTicks - leftTicks);// + 3 * angle; // 100 is the offset between left and right sensor when mouse in the
     // middle of cell
     errorD = errorP - oldErrorP;
     //        getGres();
@@ -689,7 +705,7 @@ void forwardCorrection() {
     }
     prevCorrection = 1;
     //myDisplay.clear();
-    errorP = 1 * (leftSensor - leftWallDist) + 50 * (rightTicks - leftTicks) + 3 * angle;
+    errorP = 2 * (leftSensor - rightWallDist + (leftWallDist - rightWallDist)) + 75 * (rightTicks - leftTicks) + 3 * angle;
     //errorP = 75 * (rightTicks - leftTicks) + 20 * (-angle) ;//+ .5 * (leftSensor - leftWallDist);
     errorD = errorP - oldErrorP;
   }
@@ -701,7 +717,7 @@ void forwardCorrection() {
       myDisplay.print(0);
     }
     prevCorrection = 2;
-    errorP = 1 * (rightSensor - rightWallDist) + 50 * (rightTicks - leftTicks) + 3 * angle;
+    errorP = 2 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 75 * (rightTicks - leftTicks) + 3 * angle;
     //errorP = 75 * (rightTicks - leftTicks) + 20 * (-angle);// - .5 * (rightSensor - rightWallDist);
     errorD = errorP - oldErrorP;
   }
@@ -1075,7 +1091,7 @@ void turnCorrection() {
       myDisplay.setCursor(0);
       myDisplay.clear();
       myDisplay.print("NoWF");
-      if ((leftTicks + rightTicks) / 2 >= 60) {//TODO Find this value, add correction
+      if ((leftTicks + rightTicks) / 2 >= 50) {//TODO Find this value, add correction
         turn = true;
         i = 1;
         angle = 0.0;
@@ -1112,7 +1128,7 @@ void turnCorrection() {
   }
 
   if ((wallInFront == true && turn == false) || (straight == true && wallFront())) {
-//    errorP = 1 * (rightFront - leftFront) + targetAngle - angle;//seems to work well but sometimes freaks out
+//    errorP = 1 * (rightFrontRaw - leftFrontRaw) + targetAngle - angle;//seems to work well but sometimes freaks out
     //    errorP = 2 * (rightFront - leftFront);
         errorP = targetAngle - angle;
     //    errorP = 2 * (rightFront - leftFront - .4) + targetAngle - angle;
@@ -1269,11 +1285,13 @@ void pivotTurnRight90() {
     }
     delay(1);
   }
+  setLeftPWM(0);
+  setRightPWM(0);
   //  prevLeftTicks -= leftTicks;
   //  prevRightTicks -= rightTicks;
   leftTicks = 0;
   rightTicks = 0;
-  delay(200);
+  delay(400);
   //    // Needs to deccelerate for the motors to stop correctly
   //  for (int i = turnSpeed; i >= 0; --i) {
   //    setLeftPWM(i);

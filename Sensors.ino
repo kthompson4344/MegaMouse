@@ -92,17 +92,19 @@ void refreshSensor() {
 }
 
 bool wallFront() {
-  float value = 18.0;
+  float value = 16.0;
   return ( (leftFrontRaw + rightFrontRaw)/2.0 >= value);
 //  return (leftFrontRaw > value && rightFrontRaw > value);
 }
 
 bool wallLeft() {
-  return (leftSensor > hasLeftWall);
+  return (leftSensor > hasLeftWall && leftMiddleValue > 250);
+//  return (leftSensor > hasLeftWall);
 }
 
 bool wallRight() {
-  return (rightSensor > hasRightWall);
+  return (rightSensor > hasRightWall && rightMiddleValue > 250);
+//  return (rightSensor > hasRightWall);
 }
 
 void printSensors() {
