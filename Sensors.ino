@@ -98,12 +98,12 @@ bool wallFront() {
 }
 
 bool wallLeft() {
-  return (leftSensor > hasLeftWall && leftMiddleValue > 250);
+  return (leftSensor > hasLeftWall && leftMiddleValue > 200);//200
 //  return (leftSensor > hasLeftWall);
 }
 
 bool wallRight() {
-  return (rightSensor > hasRightWall && rightMiddleValue > 250);
+  return (rightSensor > hasRightWall && rightMiddleValue > 200);
 //  return (rightSensor > hasRightWall);
 }
 
