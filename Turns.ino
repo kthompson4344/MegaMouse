@@ -42,7 +42,7 @@ void turnCorrection() {
       myDisplay.setCursor(0);
       myDisplay.clear();
       myDisplay.print("NoWF");
-      if ((leftTicks + rightTicks) / 2 >= 50) {//TODO Find this value, add correction
+      if ((leftTicks + rightTicks) / 2 >= 30) {//TODO Find this value, add correction
         turn = true;
         i = 1;
         angle = 0.0;
@@ -73,7 +73,7 @@ void turnCorrection() {
     else {
       targetAngle = -90;
     }
-    if ((rightTicks + leftTicks) / 2 > 30  || (leftFront + rightFront) / 2 > frontStop) {
+    if ((rightTicks + leftTicks) / 2 > 30  || (leftFront + rightFront) / 2 > frontStop) {//TODO CHECK THIS TICK VALUE
       continueTurn = false;
     }
   }

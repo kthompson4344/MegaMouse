@@ -19,8 +19,8 @@ int brightness = 15;        // screen brightness
 
 
 //Thresholds for left and right sensors detecting side walls
-#define hasLeftWall 300
-#define hasRightWall 300 //used to be 800
+#define hasLeftWall 250
+#define hasRightWall 250
 
 //Seperate speeds for explore and solve (mm/s) (not currently implemented)
 int exploreSpeed = 400;
@@ -39,7 +39,7 @@ const int leftWallDist = 1100;
 const float frontStop = 3.7;//3.8
 //float gyroZeroVoltage = 1.55;
 // PID Constants
-#define straightKp 12
+#define straightKp 9
 #define turnKp 16
 #define Kd 10
 
@@ -174,8 +174,8 @@ void loop() {
   //    myDisplay.print(leftFront-rightFront);
   //myDisplay.print(analogRead(A19) - analogRead(A13));
   //    delay(50);
-  solve();
-  //  algo.solve();
+//    solve();
+  algo.solve();
   //  setLeftPWM(int(.5*(2000 - leftFrontRaw)));
   //  setRightPWM(int(.5*(2000-rightFrontRaw)));
   //  delay(1);
@@ -619,7 +619,7 @@ void turnAround() {
 
 void forwardCorrection() {
   const int oneCellTicks = 327;//327
-  const int noWallRight = 400; // check this value (250)
+  const int noWallRight = 350; // check this value (250)
   const int noWallLeft =  450; // check this value (450)
 
   const int pegWallBack = 800; // check this value
@@ -700,10 +700,10 @@ void forwardCorrection() {
       myDisplay.print(0);
     }
     prevCorrection = 0;
-    angle = 0.0;
+    //    angle = 0.0;
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
     //    angle = 0.0;//TODO Not sure about this
-    errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 50 * (rightTicks - leftTicks);// + 3 * angle; // 100 is the offset between left and right sensor when mouse in the
+    errorP = .5 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks);// + 3 * angle; // 100 is the offset between left and right sensor when mouse in the
     // middle of cell
     errorD = errorP - oldErrorP;
     //        getGres();
@@ -718,9 +718,13 @@ void forwardCorrection() {
       myDisplay.print(0);
     }
     prevCorrection = 1;
-    //myDisplay.clear();
-    errorP = .5 * (leftSensor - rightWallDist + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 5 * angle;
-    //errorP = 75 * (rightTicks - leftTicks) + 20 * (-angle) ;//+ .5 * (leftSensor - leftWallDist);
+    if (leftMiddleValue > 100 && leftMiddleValue < 900) {
+      errorP = 2 * (leftSensor - leftWallDist + (leftWallDist - rightWallDist)) + 3 * (leftMiddleValue - leftSensor + 535) + 25 * (rightTicks - leftTicks) + 3 * angle;
+    }
+    else {
+      errorP = 2 * (leftSensor - rightWallDist + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 3 * angle;
+//      errorP = .5 * (leftSensor - rightWallDist + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 5 * angle;
+    }
     errorD = errorP - oldErrorP;
   }
   else if (rightValid) {
@@ -731,8 +735,12 @@ void forwardCorrection() {
       myDisplay.print(0);
     }
     prevCorrection = 2;
-    errorP = .5 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 5 * angle;
-    //errorP = 75 * (rightTicks - leftTicks) + 20 * (-angle);// - .5 * (rightSensor - rightWallDist);
+    if (rightMiddleValue > 100 && rightMiddleValue < 900) {
+      errorP = 2 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 3 * (rightSensor - rightMiddleValue - 500) + 25 * (rightTicks - leftTicks) + 3 * angle;//todo left turn version, rightMiddle Threshold
+    }
+    else {
+      errorP = 2 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 3 * angle;
+    }
     errorD = errorP - oldErrorP;
   }
   else {
@@ -751,7 +759,7 @@ void forwardCorrection() {
     //    if (leftSensor > 1800 && !currentWallLeft) {
     //      targetAngle-=2;
     //    }
-    errorP = 50 * (rightTicks - leftTicks) + 10 * (angle);
+    errorP = 75 * (rightTicks - leftTicks) + 10 * (angle);
     //errorP = 20 * (targetAngle - angle);
     //errorP = 150 * (rightTicks - leftTicks); //+ 20 * (targetAngle - angle);
 
@@ -919,7 +927,7 @@ void solve() {
     movesBuffer[31] = 0;
     */
 
-  rightWallFollow();
+  leftWallFollow();
 
   movesReady = true;
 }

@@ -92,7 +92,7 @@ void refreshSensor() {
 }
 
 bool wallFront() {
-  float value = 16.0;
+  float value = 20.0;
   return ( (leftFrontRaw + rightFrontRaw)/2.0 >= value);
 //  return (leftFrontRaw > value && rightFrontRaw > value);
 }
