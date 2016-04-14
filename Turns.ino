@@ -79,10 +79,10 @@ void turnCorrection() {
   }
 
   if ((wallInFront == true && turn == false) || (straight == true && wallFront())) {
-//    errorP = 1 * (rightFrontRaw - leftFrontRaw) + targetAngle - angle;//seems to work well but sometimes freaks out
+//    errorP = .01 * (rightFrontRaw - leftFrontRaw + 300) + targetAngle - angle;//seems to work well but sometimes freaks out
     //    errorP = 2 * (rightFront - leftFront);
         errorP = targetAngle - angle;
-    //    errorP = 2 * (rightFront - leftFront - .4) + targetAngle - angle;
+//        errorP = 2 * (rightFront - leftFront - 0.0) + targetAngle - angle;
   }
   else {
     errorP = targetAngle - angle;

@@ -20,10 +20,10 @@ void setupMotors() {
 }
 
 void setLeftPWM(int value) {
-  if (value > maxSpeed) {
+  if (value > maxPWM) {
     value = maxSpeed;
   }
-  if (value < -maxSpeed) {
+  if (value < -maxPWM) {
     value = -maxSpeed;
   }
   if (value >= 0) {
@@ -42,10 +42,10 @@ void setLeftPWM(int value) {
 }
 
 void setRightPWM(int value) {
-  if (value > maxSpeed) {
+  if (value > maxPWM) {
     value = maxSpeed;
   }
-  if (value < -maxSpeed) {
+  if (value < -maxPWM) {
     value = -maxSpeed;
   }
   if (value >= 0) {
