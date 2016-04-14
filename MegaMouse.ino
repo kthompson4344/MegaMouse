@@ -33,13 +33,13 @@ float leftSpeed;
 float rightSpeed;
 
 //Setpoint for left and right sensors detecting side walls
-const int rightWallDist = 1100;
+const int rightWallDist = 1150;
 const int leftWallDist = 1100;
 
 const float frontStop = 3.7;//3.8
 //float gyroZeroVoltage = 1.55;
 // PID Constants
-#define straightKp 9
+#define straightKp 10
 #define turnKp 16
 #define Kd 1
 
@@ -176,7 +176,7 @@ void loop() {
   //      myDisplay.print(1 * (rightFrontRaw - leftFrontRaw  +300));
   //myDisplay.print(analogRead(A19) - analogRead(A13));
   //      delay(50);
-  //    solve();
+//      solve();
   algo.solve();
   //  setLeftPWM(int(.5*(2000 - leftFrontRaw)));
   //  setRightPWM(int(.5*(2000-rightFrontRaw)));
@@ -646,9 +646,9 @@ void forwardCorrection() {
   //  const int frontWallTicks = 204;
 
   // encoder tick value when we check walls a cell ahead
-  const int readingTicks = 210; // check this value (175)
+  const int readingTicks = 215; // check this value (175)
   // encoder tick value when we switch to next cell's values
-  const int newSideTicks = 240; // check this value (200)
+  const int newSideTicks = 260; // check this value (200)
 
   static bool nextRightValid;
   static bool nextLeftValid;
@@ -681,10 +681,10 @@ void forwardCorrection() {
   //    prevRightTicks -= oneCellTicks;
   //    prevLeftTicks -= oneCellTicks;
   //  }
-  if (rightSensor < 250) {//450
+  if (rightSensor < 200) {//450
     rightValid = false;
   }
-  if (leftSensor < 250) {
+  if (leftSensor < 200) {
     leftValid = false;
   }
   // Next Cell Wall Detection
@@ -734,7 +734,7 @@ void forwardCorrection() {
     }
     prevCorrection = 1;
     if (leftMiddleValue > 200 && leftMiddleValue < 700) {
-      errorP = 2 * (leftSensor - leftWallDist + (leftWallDist - rightWallDist)) + 2 * (leftMiddleValue - leftSensor + 535) + 25 * (rightTicks - leftTicks) + 3 * angle;
+      errorP = 2 * (leftSensor - leftWallDist + (leftWallDist - rightWallDist)) + 2.5 * (leftMiddleValue - leftSensor + 535) + 25 * (rightTicks - leftTicks) + 3 * angle;
     }
     else {
       errorP = 2 * (leftSensor - rightWallDist + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 3 * angle;
@@ -750,8 +750,8 @@ void forwardCorrection() {
       myDisplay.print(0);
     }
     prevCorrection = 2;
-    if (rightMiddleValue > 200 && rightMiddleValue < 700) {
-      errorP = 2 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 2 * (rightSensor - rightMiddleValue - 500) + 25 * (rightTicks - leftTicks) + 3 * angle;//todo left turn version, rightMiddle Threshold
+    if (rightMiddleValue > 250 && rightMiddleValue < 650) {
+      errorP = 2 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 2.5 * (rightSensor - rightMiddleValue - 500) + 25 * (rightTicks - leftTicks) + 3 * angle;//todo left turn version, rightMiddle Threshold
     }
     else {
       errorP = 2 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 3 * angle;
@@ -883,22 +883,22 @@ void forwardCorrection() {
 void solve() {
   while (!movesDoneAndWallsSet) {
   }
-  bool walls[3];
-  walls[0] = walls_global[0];
-  walls[1] = walls_global[1];
-  walls[2] = walls_global[2];
-  movesDoneAndWallsSet = false;
+//  bool walls[3];
+//  walls[0] = walls_global[0];
+//  walls[1] = walls_global[1];
+//  walls[2] = walls_global[2];
+//  movesDoneAndWallsSet = false;
   //
-  movesBuffer[0] = 'f';
-  movesBuffer[1] = 'f';
-  movesBuffer[2] = 'f';
-  movesBuffer[3] = 'f';
-  movesBuffer[4] = 'f';
-  movesBuffer[5] = 'f';
-  movesBuffer[6] = 'f';
-  movesBuffer[7] = 'f';
-  movesBuffer[8] = 'a';
-  movesBuffer[9] = 'f';
+//  movesBuffer[0] = 'f';
+//  movesBuffer[1] = 'f';
+//  movesBuffer[2] = 'f';
+//  movesBuffer[3] = 'f';
+//  movesBuffer[4] = 'f';
+//  movesBuffer[5] = 'f';
+//  movesBuffer[6] = 'f';
+//  movesBuffer[7] = 'f';
+//  movesBuffer[8] = 'a';
+//  movesBuffer[9] = 'f';
   //      movesBuffer[10] = 'r';
   //      movesBuffer[11] = 'l';
   //      movesBuffer[12] = 'f';
@@ -939,7 +939,7 @@ void solve() {
   movesBuffer[31] = 0;
   */
 
-  //  leftWallFollow();
+  rightWallFollow();
 
   movesReady = true;
 }
