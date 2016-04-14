@@ -42,7 +42,7 @@ void turnCorrection() {
       myDisplay.setCursor(0);
       myDisplay.clear();
       myDisplay.print("NoWF");
-      if ((leftTicks + rightTicks) / 2 >= 30) {//TODO Find this value, add correction
+      if ((leftTicks + rightTicks) / 2 >= 20) {//TODO Find this value, add correction
         if ((moveType == TURN_RIGHT && !wallRight()) || moveType == TURN_LEFT && !wallLeft()) {
           turn = true;
           i = 1;
@@ -81,7 +81,7 @@ void turnCorrection() {
   }
 
   if ((wallInFront == true && turn == false) || (straight == true && wallFront())) {
-//    errorP = .02 * (rightFrontRaw - leftFrontRaw + 300) + targetAngle - angle;//seems to work well but sometimes freaks out
+//    errorP = .05 * (rightFrontRaw - leftFrontRaw + 300) + targetAngle - angle;//seems to work well but sometimes freaks out
     //    errorP = 2 * (rightFront - leftFront);
         errorP = targetAngle - angle;
 //        errorP = .5 * (rightFront - leftFront - 0.0) + targetAngle - angle;
