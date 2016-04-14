@@ -35,7 +35,7 @@ void turnCorrection() {
         i = 1;
         //        i = round(pow(11.346 * abs(angleConst*(rightFront - leftFront)),0.5492));//how does R-L relate to angle?
         //        angle = angleConst*(rightFront-leftFront);
-        angle = 0.0;
+//        angle = 0.0;
       }
     }
     else {
@@ -43,9 +43,11 @@ void turnCorrection() {
       myDisplay.clear();
       myDisplay.print("NoWF");
       if ((leftTicks + rightTicks) / 2 >= 30) {//TODO Find this value, add correction
-        turn = true;
-        i = 1;
-        angle = 0.0;
+        if ((moveType == TURN_RIGHT && !wallRight()) || moveType == TURN_LEFT && !wallLeft()) {
+          turn = true;
+          i = 1;
+//          angle = 0.0;
+        }
       }
     }
     //turn = true;
@@ -79,10 +81,10 @@ void turnCorrection() {
   }
 
   if ((wallInFront == true && turn == false) || (straight == true && wallFront())) {
-//    errorP = .01 * (rightFrontRaw - leftFrontRaw + 300) + targetAngle - angle;//seems to work well but sometimes freaks out
+//    errorP = .02 * (rightFrontRaw - leftFrontRaw + 300) + targetAngle - angle;//seems to work well but sometimes freaks out
     //    errorP = 2 * (rightFront - leftFront);
         errorP = targetAngle - angle;
-//        errorP = 2 * (rightFront - leftFront - 0.0) + targetAngle - angle;
+//        errorP = .5 * (rightFront - leftFront - 0.0) + targetAngle - angle;
   }
   else {
     errorP = targetAngle - angle;
