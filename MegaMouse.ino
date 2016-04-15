@@ -36,10 +36,10 @@ float rightSpeed;
 const int rightWallDist = 1150;
 const int leftWallDist = 1100;
 
-const float frontStop = 3.65;//3.8
+const float frontStop = 3.8;//3.8
 //float gyroZeroVoltage = 1.55;
 // PID Constants
-#define straightKp 8.5
+#define straightKp 8
 #define turnKp 16
 #define Kd 1
 
@@ -197,7 +197,7 @@ void getSpeed() {
       prevRightTicks = rightTicks;
       count = 0;
     }
-    if (leftBaseSpeed < 110 && goalSpeed > 0) {
+    if (leftBaseSpeed < 100 && goalSpeed > 0) {
       leftBaseSpeed++;
       rightBaseSpeed++;
     }
@@ -323,6 +323,7 @@ void correction() {
       moveType = TURN_RIGHT;
       if (firstMove) {
         correctionTimer.end();
+        sensorTimer.end();
         leftTicks = 0;
         rightTicks = 0;
         rightTurnFirstCell();
@@ -332,6 +333,7 @@ void correction() {
         walls_global[2] = wallRight();
         haveSensorReading = false;
         correctionTimer.begin(correction, 1000);
+        sensorTimer.begin(readSensors, 80);
         return;
       }
       turnCorrection();
@@ -342,6 +344,7 @@ void correction() {
       break;
     case 'a':
       correctionTimer.end();
+      sensorTimer.end();
       leftTicks = 0;
       rightTicks = 0;
       turnAround();
@@ -349,6 +352,7 @@ void correction() {
       haveSensorReading = false;
       correctionTimer.priority(255);
       correctionTimer.begin(correction, 1000);
+      sensorTimer.begin(readSensors, 80);
       return;
     default:
       moveType = NO;
@@ -408,7 +412,7 @@ void turnAround() {
   }
   if (front) {
     while (1) {
-      refreshSensor();
+//      refreshSensor();
       getSpeed();
       readGyro();
       const float frontValue = 3.5;
@@ -424,8 +428,8 @@ void turnAround() {
         else {
           leftBaseSpeed = 0;
           rightBaseSpeed = 0;
-          setLeftPWM(20);
-          setRightPWM(20);
+          setLeftPWM(00);
+          setRightPWM(00);
           delay(200);
           break;
         }
@@ -485,7 +489,7 @@ void turnAround() {
   //Turn Around with no wall in front
   else {
     while (1) {
-      refreshSensor();
+//      refreshSensor();
       getSpeed();
       readGyro();
       const int tickValue = 00;
@@ -501,8 +505,8 @@ void turnAround() {
         else {
           leftBaseSpeed = 0;
           rightBaseSpeed = 0;
-          setLeftPWM(20);
-          setRightPWM(20);
+          setLeftPWM(00);
+          setRightPWM(00);
           delay(200);
           break;
         }
@@ -725,7 +729,7 @@ void forwardCorrection() {
     angle = 0.0;
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
     //    angle = 0.0;//TODO Not sure about this
-    errorP = .5 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks);// + 3 * angle; // 100 is the offset between left and right sensor when mouse in the
+    errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks);// + 3 * angle; // 100 is the offset between left and right sensor when mouse in the
     // middle of cell
     errorD = errorP - oldErrorP;
     //        getGres();

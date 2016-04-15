@@ -33,47 +33,47 @@ void readSensors() {
         break;
 
       case 1: // Turn on left front sensor.
-        digitalWriteFast(TX[lf],HIGH);
+        digitalWriteFast(TX[lf], HIGH);
         break;
 
       case 2: // Read left front sensor, then turn it off.
         leftFrontRaw = analogRead(RX[lf]) - leftFrontAmbient;
-        leftLog = 1/log(leftFrontRaw);
-        leftFront = 1/(48.59*(leftLog*leftLog) - 11.978*leftLog + .8614);
-        digitalWriteFast(TX[lf],LOW);
+        leftLog = 1 / log(leftFrontRaw);
+        leftFront = 1 / (48.59 * (leftLog * leftLog) - 11.978 * leftLog + .8614);
+        digitalWriteFast(TX[lf], LOW);
         break;
 
       case 3: // Turn on right front sensor.
-        digitalWriteFast(TX[rf],HIGH);
+        digitalWriteFast(TX[rf], HIGH);
         break;
 
       case 4: // Read right front sensor, then turn it off.
         rightFrontRaw = analogRead(RX[rf]) - rightFrontAmbient;
         rightFront = log(rightFrontRaw);
-        digitalWriteFast(TX[rf],LOW);
+        digitalWriteFast(TX[rf], LOW);
         break;
 
       case 5: // Turn on side sensors.
-        digitalWriteFast(TX[left],HIGH);
-        digitalWriteFast(TX[right],HIGH);
+        digitalWriteFast(TX[left], HIGH);
+        digitalWriteFast(TX[right], HIGH);
         break;
 
       case 6: // Read side sensors, then turn them off.
         leftSensor = analogRead(RX[left]) - leftSensorAmbient;
         rightSensor = analogRead(RX[right]) - rightSensorAmbient;
-        digitalWriteFast(TX[left],LOW);
-        digitalWriteFast(TX[right],LOW);
+        digitalWriteFast(TX[left], LOW);
+        digitalWriteFast(TX[right], LOW);
         break;
 
       case 7: // Turn on diagonal sensors.
-        digitalWriteFast(TX[diagl],HIGH);
+        digitalWriteFast(TX[diagl], HIGH);
         digitalWriteFast(diagHighPower, HIGH);
         break;
 
       case 8: // Read diagonal sensors, then turn them off.
         leftMiddleValue = analogRead(RX[diagl]) - leftMiddleAmbient;
         rightMiddleValue = analogRead(RX[diagr]) - rightMiddleAmbient;
-        digitalWriteFast(TX[diagl],LOW);
+        digitalWriteFast(TX[diagl], LOW);
         digitalWriteFast(diagHighPower, LOW);
         break;
     }
@@ -89,30 +89,32 @@ void readSensors() {
 
 void refreshSensor() {
   haveSensorReading = false;
+  while (!haveSensorReading) {
+  }
 }
 
 bool wallFront() {
-  float value = 13.0;//13-15
-  return ( (leftFrontRaw + rightFrontRaw)/2.0 >= value);
-//  return (leftFrontRaw > value && rightFrontRaw > value);
+  float value = 12.0;//13-15
+  return ( (leftFrontRaw + rightFrontRaw) / 2.0 >= value);
+  //  return (leftFrontRaw > value && rightFrontRaw > value);
 }
 
 bool wallLeft() {
   return (leftSensor > hasLeftWall && leftMiddleValue > 250);//200
-//  return (leftSensor > hasLeftWall);
+  //  return (leftSensor > hasLeftWall);
 }
 
 bool wallRight() {
   return (rightSensor > hasRightWall && rightMiddleValue > 250);
-//  return (rightSensor > hasRightWall);
+  //  return (rightSensor > hasRightWall);
 }
 
 void printSensors() {
-  Serial.print(leftFront,4);Serial.print(" ");
-  Serial.print(leftMiddleValue);Serial.print(" ");
-  Serial.print(leftSensor);Serial.print(" ");
-  Serial.print(rightSensor);Serial.print(" ");
-  Serial.print(rightMiddleValue);Serial.print(" ");
-  Serial.println(rightFront,4);
+  Serial.print(leftFront, 4); Serial.print(" ");
+  Serial.print(leftMiddleValue); Serial.print(" ");
+  Serial.print(leftSensor); Serial.print(" ");
+  Serial.print(rightSensor); Serial.print(" ");
+  Serial.print(rightMiddleValue); Serial.print(" ");
+  Serial.println(rightFront, 4);
 }
 
