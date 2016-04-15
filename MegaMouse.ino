@@ -17,6 +17,7 @@ mack::MackAlgo algo;
 LedDisplay myDisplay = LedDisplay(dataPin, registerSelect, clockPin, enable, reset, displayLength);
 int brightness = 15;        // screen brightness
 
+
 //Thresholds for left and right sensors detecting side walls
 #define hasLeftWall 220
 #define hasRightWall 220
@@ -36,6 +37,7 @@ const int rightWallDist = 1150;
 const int leftWallDist = 1100;
 
 const float frontStop = 3.7;//3.8
+//float gyroZeroVoltage = 1.55;
 // PID Constants
 #define straightKp 9.2
 #define Kd 0
@@ -76,9 +78,6 @@ IntervalTimer refreshSensorTimer;
 //Current angle of the robot
 volatile float angle = 0.0;
 
-//reset button
-volatile bool pressed = 0;
-
 //Different move types
 volatile enum {
   NO = 0,
@@ -88,7 +87,7 @@ volatile enum {
   TURN_AROUND = 4
 } moveType;
 
-#define buttonPin 16
+const int buttonPin = 16;
 
 int sensorCounts = 0;
 
@@ -106,8 +105,9 @@ void setup() {
 
   setupMotors();
   setupSensors();
-  pinMode(buttonPin, OUTPUT);
-  attachInterrupt(buttonPin, resetPressed, FALLING);
+
+
+  //pinMode(buttonPin, INPUT_PULLUP);
 
   // Wait for Button Press to Start
   //  while (digitalRead(buttonPin) == 1) {
@@ -159,9 +159,30 @@ void setup() {
 }
 
 void loop() {
-
+  //Solve the maze
+  //algo.solve();
+  //start to 1st cell: 260
+  //1 cell: 323
+  //        myDisplay.clear();
+  //        myDisplay.setCursor(0);
+  //      myDisplay.print((rightTicks + leftTicks) / 2);
+  //   myDisplay.print((rightTicks + leftTicks) / 2);
+  //  myDisplay.print(rightMiddleValue);//180 no wall, 820 wall
+  //  myDisplay.print(leftMiddleValue);// 300 no wall, 700 wall
+  //      myDisplay.print(leftFrontRaw);
+  //      myDisplay.print((leftFrontRaw + rightFrontRaw) / 2);
+  //  myDisplay.print(rightFront);
+  //      myDisplay.print(1 * (rightFrontRaw - leftFrontRaw  +300));
+  //myDisplay.print(analogRead(A19) - analogRead(A13));
+  //      delay(50);
+//      solve();
   algo.solve();
-
+  //  setLeftPWM(int(.5*(2000 - leftFrontRaw)));
+  //  setRightPWM(int(.5*(2000-rightFrontRaw)));
+  //  delay(1);
+  //setLeftPWM(-200);
+  //setRightPWM(200);
+  //delay(5);
 }
 
 void getSpeed() {
@@ -410,7 +431,7 @@ void turnAround() {
         stop = true;
         goalSpeed = 0;//TODO DO THE SAME FOR NO WALL
       }
-      if (stop || pressed) {
+      if (stop == true) {
         if (rightBaseSpeed > 00) {
           rightBaseSpeed--;
           leftBaseSpeed--;
@@ -487,7 +508,7 @@ void turnAround() {
 
         stop = true;
       }
-      if (stop || pressed) {
+      if (stop == true) {
         if (rightBaseSpeed > 30) {
           leftBaseSpeed--;
           rightBaseSpeed--;
@@ -668,7 +689,7 @@ void forwardCorrection() {
   //    prevRightTicks -= oneCellTicks;
   //    prevLeftTicks -= oneCellTicks;
   //  }
-  if (rightSensor < 200) {//450 TODO TRY WITHOUT THIS
+  if (rightSensor < 200) {//450
     rightValid = false;
   }
   if (leftSensor < 200) {
@@ -711,8 +732,6 @@ void forwardCorrection() {
 //    else {
       errorP = .5 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks);
 //    }
-//      errorP = (2 * (leftSensor - leftWallDist + (leftWallDist - rightWallDist)) + 2.5 * (leftMiddleValue - leftSensor + 535)) - (2 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 2.5 * (rightSensor - rightMiddleValue - 500)) + + 25 * (rightTicks - leftTicks);//TODO TRY THIS
-
     // middle of cell
     errorD = errorP - oldErrorP;
     //        getGres();
@@ -836,7 +855,7 @@ void forwardCorrection() {
   if ((rightTicks + leftTicks) / 2 >= oneCellTicks) {
     endCell = true;
   }
-  if (endCell || pressed) {
+  if (endCell) {
     currentWallLeft = nextLeftValid;
     currentWallRight = nextRightValid;
     oldErrorP = 0;
@@ -845,6 +864,7 @@ void forwardCorrection() {
     walls_global[1] = wallFront();
     walls_global[2] = wallRight();
     currentMoveDone = true;
+    //        needMove = true;
     nextCellDecided = false;
     moveType = NO;
     endCell = false;
@@ -1003,13 +1023,5 @@ void leftWallFollow() {
   }
 }
 
-void resetPressed() {
-  if (!pressed) {
-    pressed = true;
-    setLeftPWM(0);
-    setRightPWM(0);
-    //run reset code here TODO
-    
-  }
-}
+
 
