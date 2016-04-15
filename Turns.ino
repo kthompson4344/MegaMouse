@@ -39,9 +39,9 @@ void turnCorrection() {
       }
     }
     else {
-      myDisplay.setCursor(0);
-      myDisplay.clear();
-      myDisplay.print("NoWF");
+//      myDisplay.setCursor(0);
+//      myDisplay.clear();
+//      myDisplay.print("NoWF");
       if ((leftTicks + rightTicks) / 2 >= 30) {//TODO Find this value, add correction
         if ((moveType == TURN_RIGHT && !wallRight()) || moveType == TURN_LEFT && !wallLeft()) {
           turn = true;
@@ -61,7 +61,7 @@ void turnCorrection() {
     }
   }
 
-  if (straight == false && abs(targetAngle) == 90) {
+  if ((straight == false && abs(targetAngle) == 90)) {
     //    prevRightTicks-= rightTicks;
     //    prevLeftTicks-= leftTicks;
     rightTicks = 0;
@@ -75,7 +75,7 @@ void turnCorrection() {
     else {
       targetAngle = -90;
     }
-    if ((rightTicks + leftTicks) / 2 > 30  || (leftFront + rightFront) / 2 > frontStop) {//TODO CHECK THIS TICK VALUE
+    if ((rightTicks + leftTicks) / 2 > 30  || (leftFront + rightFront) / 2 > frontStop || pressed) {//TODO CHECK THIS TICK VALUE
       continueTurn = false;
     }
   }
@@ -104,7 +104,7 @@ void turnCorrection() {
   if (i == 50) {
     //    myDisplay.clear();
   }
-  if (continueTurn) {
+  if (continueTurn || !pressed) {
     if (!straight) {
       i++;
     }
