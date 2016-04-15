@@ -37,8 +37,8 @@ const int leftWallDist = 1100;
 
 const float frontStop = 3.7;//3.8
 // PID Constants
-#define straightKp 9.5
-#define Kd 1
+#define straightKp 9.2
+#define Kd 0
 
 /* Variables for interface between drive code and algorithm */
 volatile char movesBuffer[256];
