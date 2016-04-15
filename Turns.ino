@@ -257,7 +257,7 @@ void pivotTurnRight90() {
       readGyro();
       errorP = angle - targetAngle;// + .1 * (leftSpeed + rightSpeed);
       errorD = errorP - oldErrorP;
-      totalError = 40 * errorP + 20 * errorD;
+      totalError = 39 * errorP + 20 * errorD;
       currentLeftPWM = -totalError;
       currentRightPWM = totalError;
       setLeftPWM(currentLeftPWM);// + (int)(.5 * (abs(rightTicks) - leftTicks)));

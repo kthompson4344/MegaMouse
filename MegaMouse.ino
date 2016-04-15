@@ -39,9 +39,8 @@ const int leftWallDist = 1100;
 const float frontStop = 3.7;//3.8
 //float gyroZeroVoltage = 1.55;
 // PID Constants
-#define straightKp 8.5
-#define turnKp 16
-#define Kd 0
+#define straightKp 9.5
+#define Kd 1
 
 /* Variables for interface between drive code and algorithm */
 volatile char movesBuffer[256];
@@ -216,7 +215,7 @@ void getSpeed() {
       prevRightTicks = rightTicks;
       count = 0;
     }
-    if (leftBaseSpeed < 100 && goalSpeed > 0) {
+    if (leftBaseSpeed < 105 && goalSpeed > 0) {
 
       leftBaseSpeed++;
       rightBaseSpeed++;
@@ -420,7 +419,7 @@ void turnAround() {
   }
   else {
     afterTurnAround = true;
-    front = true;
+    front = false;
   }
   if (front) {
     while (1) {
@@ -530,19 +529,19 @@ void turnAround() {
       else if (wallRight()) {
         // Only right wall
         //read Gyro? TODO
-        errorP = 20 * (angle) - .5 * (rightSensor - rightWallDist);
+        errorP = 1 * (angle) - .5 * (rightSensor - rightWallDist);
         errorD = errorP;
       }
       else if (wallLeft()) {
         // Only left wall
         // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
         //read Gyro? TODO
-        errorP = 20 * (angle) + .5 * (leftSensor - leftWallDist);
+        errorP =1 * (angle) + .5 * (leftSensor - leftWallDist);
         errorD = errorP;
       }
       else {
         //read Gyro? TODO
-        errorP = 20 * (angle);
+        errorP = 1 * (angle);
         errorD = errorP;
       }
       errorD = errorP;
@@ -624,8 +623,8 @@ void turnAround() {
         break;
       }
       else {
-        setLeftPWM(int(.2 * (3100 - leftFrontRaw)));
-        setRightPWM(int(.2 * (3100 - rightFrontRaw)));
+        setLeftPWM(int(.2 * (3300 - leftFrontRaw)));
+        setRightPWM(int(.2 * (3300 - rightFrontRaw)));
       }
       i++;
       delay(1);
@@ -727,12 +726,12 @@ void forwardCorrection() {
     angle = 0.0;
     // Has both wall, so error correct with both (working, just need to adjust PD constants when final mouse is built)
     //    angle = 0.0;//TODO Not sure about this
-    if (afterTurnAround == true) {
-      errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 5 * (rightTicks - leftTicks);
-    }
-    else {
-      errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks);
-    }
+//    if (afterTurnAround == true) {
+//      errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 5 * (rightTicks - leftTicks);
+//    }
+//    else {
+      errorP = .5 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks);
+//    }
     // middle of cell
     errorD = errorP - oldErrorP;
     //        getGres();
@@ -747,7 +746,7 @@ void forwardCorrection() {
       myDisplay.print(0);
     }
     prevCorrection = 1;
-    if (leftMiddleValue > 200 && leftMiddleValue < 700) {
+    if (leftMiddleValue > 350 && leftMiddleValue < 650) {
       errorP = 2 * (leftSensor - leftWallDist + (leftWallDist - rightWallDist)) + 2.5 * (leftMiddleValue - leftSensor + 535) + 25 * (rightTicks - leftTicks) + 3 * angle;
     }
     else {
@@ -764,7 +763,7 @@ void forwardCorrection() {
       myDisplay.print(0);
     }
     prevCorrection = 2;
-    if (rightMiddleValue > 250 && rightMiddleValue < 650) {
+    if (rightMiddleValue > 350 && rightMiddleValue < 650) {
       errorP = 2 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 2.5 * (rightSensor - rightMiddleValue - 500) + 25 * (rightTicks - leftTicks) + 3 * angle;//todo left turn version, rightMiddle Threshold
     }
     else {
