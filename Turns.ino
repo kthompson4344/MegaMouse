@@ -104,7 +104,7 @@ void turnCorrection() {
   if (i == 50) {
     //    myDisplay.clear();
   }
-  if (continueTurn) {
+  if (continueTurn || !buttonPressed) {
     if (!straight) {
       i++;
     }

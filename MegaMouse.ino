@@ -78,6 +78,7 @@ IntervalTimer refreshSensorTimer;
 //Current angle of the robot
 volatile float angle = 0.0;
 
+volatile bool buttonPressed = false;
 //Different move types
 volatile enum {
   NO = 0,
@@ -116,20 +117,8 @@ void setup() {
   straightKp = float(rightTicks)/10.0;
   
   setupSensors();
+  attachInterrupt(buttonPin, resetPressed, FALLING);
 
-
-  //pinMode(buttonPin, INPUT_PULLUP);
-
-  // Wait for Button Press to Start
-  //  while (digitalRead(buttonPin) == 1) {
-  //  }//TODO Solder Button
-  //delay(3000);
-  //Start by placing hand in front of sensor (too sensitive)
-  //readSensors();
-  //while (rightFront < 3300 && rightMiddleValue < 3300 && rightSensor < 3300) {
-  //        readSensors();
-  //        Serial.println(leftSensor);
-  //}
   moveType = NO; //TODO just added 3/1/16
   delay(2000);
   myDisplay.setCursor(0);
@@ -187,6 +176,11 @@ void loop() {
   //      delay(50);
 //      solve();
   algo.solve();
+
+  if (buttonPressed && !movesReady) {
+    setLeftPWM(0);
+    setRightPWM(0);
+  }
   //  setLeftPWM(int(.5*(2000 - leftFrontRaw)));
   //  setRightPWM(int(.5*(2000-rightFrontRaw)));
   //  delay(1);
@@ -900,7 +894,7 @@ void forwardCorrection() {
   if ((rightTicks + leftTicks) / 2 >= oneCellTicks) {
     endCell = true;
   }
-  if (endCell) {
+  if (endCell || buttonPressed) {
     currentWallLeft = nextLeftValid;
     currentWallRight = nextRightValid;
     oldErrorP = 0;
@@ -1068,5 +1062,9 @@ void leftWallFollow() {
   }
 }
 
-
+void resetPressed() {
+  if (!buttonPressed) {
+    buttonPressed = true;
+  }
+}
 
