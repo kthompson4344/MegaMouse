@@ -419,7 +419,7 @@ void turnAround() {
   }
   else {
     afterTurnAround = true;
-    front = false;
+    front = true;
   }
   if (front) {
     while (1) {
