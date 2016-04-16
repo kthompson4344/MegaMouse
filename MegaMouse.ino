@@ -3,8 +3,8 @@
 #include "Motors.h"
 #include "Sensors.h"
 #include "Profiles.h"
-#include "MackAlgo.h"
-mack::MackAlgo algo;
+#include "MackAlgoTwo.h"
+mackAlgoTwo::MackAlgoTwo algo;
 
 #define dataPin 11              // connects to the display's data in
 #define registerSelect 12       // the display's register select pin 
