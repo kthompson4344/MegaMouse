@@ -441,7 +441,7 @@ void turnAround() {
   }
   else {
     afterTurnAround = true;
-    front = true;
+    front = false;
   }
   if (front) {
     while (1) {
@@ -468,26 +468,30 @@ void turnAround() {
         }
       }
       if (wallRight() && wallLeft()) {
-        errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 50 * (rightTicks - leftTicks);
+        errorP = .5 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks);
       }
       else if (wallRight()) {
-        const int wallDist = rightWallDist; //Make this bigger to move closer to the wall
-        // Only right wall
-        //read Gyro? TODO
-        errorP = 1 * (angle);// - .5 * (rightSensor - wallDist);
+        if (rightMiddleValue > 350 && rightMiddleValue < 650) {
+      errorP = 2 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 2.5 * (rightSensor - rightMiddleValue - 500) + 25 * (rightTicks - leftTicks) + 3 * angle;//todo left turn version, rightMiddle Threshold
+    }
+    else {
+      errorP = 2 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 3 * angle;
+    }
         errorD = errorP;
       }
       else if (wallLeft()) {
-        const int wallDist = leftWallDist; // Make this bigger to move closer to the wall
-        // Only left wall
-        // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
-        //read Gyro? TODO
-        errorP = 1 * (angle);// + .5 * (leftSensor - wallDist);
+        if (leftMiddleValue > 350 && leftMiddleValue < 650) {
+      errorP = 2 * (leftSensor - leftWallDist + (leftWallDist - rightWallDist)) + 2.5 * (leftMiddleValue - leftSensor + 535) + 25 * (rightTicks - leftTicks) + 3 * angle;
+    }
+    else {
+      errorP = 2 * (leftSensor - rightWallDist + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 3 * angle;
+      //      errorP = .5 * (leftSensor - rightWallDist + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 5 * angle;
+    }
         errorD = errorP;
       }
       else {
         //read Gyro? TODO
-        errorP = 20 * (angle);
+        errorP = 75 * (rightTicks - leftTicks) + 10 * (angle);
         errorD = errorP;
       }
       //      errorP += 3*(rightFront - leftFront);
@@ -525,9 +529,9 @@ void turnAround() {
 //      refreshSensor();
       getSpeed();
       readGyro();
-      const int tickValue = 00;
+      const int tickValue = 20;
       if ((leftTicks + rightTicks) / 2 > tickValue && stop == false) {
-      
+      goalSpeed = 0;
         stop = true;
       }
       if (stop == true) {
@@ -545,25 +549,32 @@ void turnAround() {
         }
       }
       if (wallRight() && wallLeft()) {
-        errorP = 1 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)); // 100 is the offset between left and right sensor when mouse in the
+        errorP = .5 * (leftSensor - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks);
         // middle of cell
       }
       else if (wallRight()) {
         // Only right wall
-        //read Gyro? TODO
-        errorP = 1 * (angle) - .5 * (rightSensor - rightWallDist);
+        if (rightMiddleValue > 350 && rightMiddleValue < 650) {
+      errorP = 2 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 2.5 * (rightSensor - rightMiddleValue - 500) + 25 * (rightTicks - leftTicks) + 3 * angle;//todo left turn version, rightMiddle Threshold
+    }
+    else {
+      errorP = 2 * (leftWallDist - rightSensor + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 3 * angle;
+    }
         errorD = errorP;
       }
       else if (wallLeft()) {
-        // Only left wall
-        // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
-        //read Gyro? TODO
-        errorP =1 * (angle) + .5 * (leftSensor - leftWallDist);
+        if (leftMiddleValue > 350 && leftMiddleValue < 650) {
+      errorP = 2 * (leftSensor - leftWallDist + (leftWallDist - rightWallDist)) + 2.5 * (leftMiddleValue - leftSensor + 535) + 25 * (rightTicks - leftTicks) + 3 * angle;
+    }
+    else {
+      errorP = 2 * (leftSensor - rightWallDist + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 3 * angle;
+      //      errorP = .5 * (leftSensor - rightWallDist + (leftWallDist - rightWallDist)) + 25 * (rightTicks - leftTicks) + 5 * angle;
+    }
         errorD = errorP;
       }
       else {
         //read Gyro? TODO
-        errorP = 1 * (angle);
+        errorP = 75 * (rightTicks - leftTicks) + 10 * (angle);
         errorD = errorP;
       }
       errorD = errorP;
@@ -601,7 +612,7 @@ void turnAround() {
   digitalWriteFast(TX[rf], LOW);
   delayMicroseconds(80);
   if (wallFront()) {
-    while (i < 300) {
+    while (i < 350) {
       //TODO (this is a hack and shouldn't be here, but it makes it work)
       haveSensorReading = false;
       while (!haveSensorReading) {
@@ -621,7 +632,14 @@ void turnAround() {
     setLeftPWM(0);
     setRightPWM(0);
   }
-  pivotTurnRight90();
+  bool leftTurn = false;
+  if (rightSensor > 200) {
+    pivotTurnRight90();
+  }
+  else {
+    pivotTurnLeft90();
+    leftTurn = true;
+  }
   //  myDisplay.print("Done");
 
   //use only for pivotTurn90
@@ -654,7 +672,12 @@ void turnAround() {
     setLeftPWM(0);
     setRightPWM(0);
   }
-  pivotTurnRight90();
+  if (leftTurn) {
+    pivotTurnLeft90();
+  }
+  else {
+    pivotTurnRight90();
+  }
 
   //Insert side wall correction here
 
@@ -665,7 +688,7 @@ void turnAround() {
 void forwardCorrection() {
   const int oneCellTicks = 327;//327
   const int noWallRight = 350; // check this value (250)
-  const int noWallLeft =  450; // check this value (450)
+  const int noWallLeft =  350; // check this value (450)
 
   //  const int pegWallBack = 800; // check this value
   //  const int pegNoWalls = 1000;
@@ -711,12 +734,12 @@ void forwardCorrection() {
   //    prevRightTicks -= oneCellTicks;
   //    prevLeftTicks -= oneCellTicks;
   //  }
-  if (rightSensor < 200) {//450
-    rightValid = false;
-  }
-  if (leftSensor < 200) {
-    leftValid = false;
-  }
+//  if (rightSensor < 200) {//450
+//    rightValid = false;
+//  }
+//  if (leftSensor < 200) {
+//    leftValid = false;
+//  }
   // Next Cell Wall Detection
   if ((rightTicks + leftTicks) / 2 >= readingTicks && !nextCellDecided) {
     angle = 0;
