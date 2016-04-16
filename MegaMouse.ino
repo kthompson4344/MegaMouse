@@ -39,7 +39,7 @@ const int leftWallDist = 1100;
 const float frontStop = 3.7;//3.8
 //float gyroZeroVoltage = 1.55;
 // PID Constants
-#define straightKp 9.2
+float straightKp = 10;
 #define Kd 0
 
 /* Variables for interface between drive code and algorithm */
@@ -51,7 +51,7 @@ volatile bool movesDoneAndWallsSet = false; // Set to true by drive, set to fals
 /* End of variables for interface */
 
 //Max speed for acceleration
-const int maxSpeed = 400;
+int maxSpeed = 400;
 
 const int maxPWM = 1000;
 
@@ -93,7 +93,7 @@ int sensorCounts = 0;
 
 void setup() {
   //Serial.begin(9600);
-  //Serial.begin(115200);
+//  Serial.begin(115200);
   //    Serial.begin(115200);
   myDisplay.begin();
   // set the brightness of the display:
@@ -102,8 +102,19 @@ void setup() {
   myDisplay.println("Mega");
   // 12 bit ADC resolution
   analogReadResolution(12);
+  pinMode(buttonPin, INPUT_PULLUP);  
 
   setupMotors();
+  rightTicks = 100;
+  while (digitalRead(buttonPin) == 1) {
+    myDisplay.clear();
+    myDisplay.setCursor(0);
+    myDisplay.print(float(rightTicks)/10.0);
+    Serial.println(float(rightTicks)/10.0);
+    delay(50);
+  }
+  straightKp = float(rightTicks)/10.0;
+  
   setupSensors();
 
 
@@ -120,8 +131,7 @@ void setup() {
   //        Serial.println(leftSensor);
   //}
   moveType = NO; //TODO just added 3/1/16
-  delay(3000);
-  delay(1000);
+  delay(2000);
   myDisplay.setCursor(0);
   myDisplay.clear();
   myDisplay.print("3");
@@ -332,16 +342,28 @@ void correction() {
     case 'r':
       moveType = TURN_RIGHT;
       if (firstMove) {
+        myDisplay.clear();
+        myDisplay.setCursor(0);
+        myDisplay.print("RTFC");
         correctionTimer.end();
         sensorTimer.end();
         leftTicks = 0;
         rightTicks = 0;
         rightTurnFirstCell();
+        myDisplay.clear();
+        firstMove = false;
+        movesBuffer[0] = 'f';
         correctionTimer.priority(255);
         walls_global[0] = wallLeft();
         walls_global[1] = wallFront();
         walls_global[2] = wallRight();
+        firstCell = false;
+        afterTurnAround = true;
         haveSensorReading = false;
+        while (!haveSensorReading) {
+          readSensors();
+          delayMicroseconds(80);
+        }
         correctionTimer.begin(correction, 1000);
         sensorTimer.begin(readSensors, 80);
         return;
@@ -429,7 +451,7 @@ void turnAround() {
       const float frontValue = 3.5;
       if ((leftFront + rightFront) / 2 > frontValue && stop == false) {
         stop = true;
-        goalSpeed = 0;//TODO DO THE SAME FOR NO WALL
+        goalSpeed = 0;
       }
       if (stop == true) {
         if (rightBaseSpeed > 00) {
@@ -505,7 +527,7 @@ void turnAround() {
       readGyro();
       const int tickValue = 00;
       if ((leftTicks + rightTicks) / 2 > tickValue && stop == false) {
-
+      
         stop = true;
       }
       if (stop == true) {

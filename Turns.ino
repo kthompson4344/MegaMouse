@@ -306,65 +306,31 @@ void pivotTurnRight90() {
 
 // If mouse starts facing a wall, this turns in the first cell to face the opening
 void rightTurnFirstCell() {
-  const int frontLeftStop = 1900;
-  const int frontRightStop = 1900;
-  bool leftStop = false;
-  bool rightStop = false;
-  int tickCount = 180;
-  int errorP;
-  int errorD;
-  int totalError;
-  bool front;
-  //  leftBaseSpeed = exploreSpeed;
-  //  rightBaseSpeed = exploreSpeed;
-  moveType = NO;
-
-  //Turn Around with no wall in front
-
-  const int tickValue = 50;
-  while (leftFront < frontLeftStop && rightFront < frontRightStop) {
-    // Only left wall
-    // errorP = 2 * (leftMiddleValue - leftSensor + 1200) + 100 * (angle - targetAngle);
-    //read Gyro? TODO
-    errorP = 20 * (angle) + .5 * (leftSensor - leftWallDist);
-    errorD = errorP;
-
-    errorD = errorP;
-    totalError = straightKp * errorP + Kd * errorD;
-
-    // Calculate PWM based on Error
-    currentLeftPWM = leftBaseSpeed + totalError / 124;
-    currentRightPWM = rightBaseSpeed - totalError / 124;
-
-    // Update Motor PWM values
-    setLeftPWM(currentLeftPWM);
-    setRightPWM(currentRightPWM);
-
-    //TODO (this is a hack and shouldn't be here, but it makes it work)
-    haveSensorReading = false;
-    while (!haveSensorReading) {
-      readSensors();
-      delayMicroseconds(80);
+  int i = 0;
+  while (i < 350) {
+      //TODO (this is a hack and shouldn't be here, but it makes it work)
+      haveSensorReading = false;
+      while (!haveSensorReading) {
+        readSensors();
+        delayMicroseconds(80);
+      }
+      if ((leftFrontRaw + rightFrontRaw) / 2 < 100) {
+        break;
+      }
+      else {
+        setLeftPWM(int(.2 * (3300 - leftFrontRaw)));
+        setRightPWM(int(.2 * (3300 - rightFrontRaw)));
+      }
+      i++;
+      delay(1);
     }
-
-  }
-  setRightPWM(0);
-  setLeftPWM(0);
-  delay(200);
-
+    setLeftPWM(0);
+    setRightPWM(0);
   pivotTurnRight90();
-
-  angle = 0.0;
-  delay(200);
-  setLeftPWM(-150);
-  setRightPWM(-150);
-  delay(350);
-  for (int i = -150; i < 0; ++i) {
-    setLeftPWM(i);
-    setRightPWM(i);
-  }
-  delay(200);
-  firstCell = true;
-  movesBuffer[0] = 'f';
-
+  rightTicks = 0;
+  leftTicks = 0;
+  prevRightTicks = 0;
+  prevLeftTicks = 0;
+  leftSpeed = 0;
+  rightSpeed = 0;
 }

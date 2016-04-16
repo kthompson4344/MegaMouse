@@ -10,7 +10,7 @@
 namespace mack {
 
 static const int MAZE_WIDTH = 10;  // XXX
-static const int MAZE_HEIGHT = 10; // XXX
+static const int MAZE_HEIGHT = 6; // XXX
 enum {NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3};
 
 #if (SIMULATOR)
